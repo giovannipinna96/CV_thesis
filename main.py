@@ -1,9 +1,8 @@
 import torch
 from torch.nn import ModuleList
 import torchvision
-from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms as T
-import random
+import os
 import data
 import train
 
@@ -13,6 +12,8 @@ import train
 if __name__ == "__main__":
     root_train = "ImageSet/train"
     root_test = "ImageSet/test"
+    weights_save_path = "models/model.pt"
+
     transform_test = T.Compose([
         T.Resize((256, 256)),
         T.ToTensor(),
@@ -49,4 +50,7 @@ if __name__ == "__main__":
 
     train.train_model(net, trainloader, loss_fn, optimizer, num_epochs, lr_scheduler=scheduler, device="cuda:0")
     train.test_model(net, testloader, loss_fn=loss_fn, device="cuda:0")
+
+    os.makedirs(os.path.dirname(weights_save_path), exist_ok=True)
+    torch.save(net.state_dict(), weights_save_path)
 
