@@ -1,15 +1,14 @@
 import torch
+from torch.nn import ModuleList
 import torchvision
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms as T
 import random
 import data
+import train
 
 
 
-class To01():
-    def __call__(self, tensor:torch.Tensor):
-        return tensor.sub_(tensor.min()).div_(tensor.max())
 
 if __name__ == "__main__":
     root_train = "ImageSet/train"
@@ -22,10 +21,14 @@ if __name__ == "__main__":
     transform_train = T.Compose([
         T.Resize((256, 256)),
         T.RandomRotation((0, 359), interpolation=T.InterpolationMode.BILINEAR),
-        T.RandomApply(T.GaussianBlur(), p=.33),
+        T.RandomApply(
+            ModuleList([T.GaussianBlur(kernel_size=5)]),
+            p=.33),
         data.PILToTensor(),
-        T.RandomApply(data.RandomPatch, p=0.75),
-        To01(),
+        T.RandomApply(
+            ModuleList([data.RandomPatch(50, 200, [[0,0,0],[100,100,100]], .5)]),
+            p=0.75),
+        data.To01(),
         T.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
     ])
     batch_size_train = 32
@@ -37,7 +40,13 @@ if __name__ == "__main__":
     net = torchvision.models.resnet50(pretrained=True)
     net.fc = torch.nn.Linear(2048, num_classes)
 
-    optimizer = torch.optim.SGD(lr=.001, momentum=.9, weight_decay=5e-4)
-    loss_fn = torch.nn.CrossEntropyLoss()
+    num_epochs = 15
 
-    net.cuda()
+    optimizer = torch.optim.SGD(net.parameters(), lr=.01, momentum=.9, weight_decay=5e-4)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=list(range(num_epochs))[5::2], gamma=0.25)
+    loss_fn = torch.nn.CrossEntropyLoss()
+    
+
+    train.train_model(net, trainloader, loss_fn, optimizer, num_epochs, lr_scheduler=scheduler, device="cuda:0")
+    train.test_model(net, testloader, loss_fn=loss_fn, device="cuda:0")
+
