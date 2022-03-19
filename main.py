@@ -7,8 +7,6 @@ import data
 import train
 
 
-
-
 if __name__ == "__main__":
     root_train = "ImageSet/train"
     root_test = "ImageSet/test"
