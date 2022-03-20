@@ -129,6 +129,9 @@ def train_model(
     return loss_meter.sum, performance_meter.avg
 
 def test_model(model, dataloader, performance=accuracy, loss_fn=None, device=None):
+    writer2 = SummaryWriter(f'runs/punzoni/test_model_tensorboard')
+    step=0
+    out = []
     # create an AverageMeter for the loss if passed
     if loss_fn is not None:
         loss_meter = AverageMeter()
@@ -152,6 +155,20 @@ def test_model(model, dataloader, performance=accuracy, loss_fn=None, device=Non
             if loss_fn is not None:
                 loss_meter.update(loss.item(), X.shape[0])
             performance_meter.update(acc, X.shape[0])
+
+            #extract features
+            #out_extracted = utils.extrating_features(model)
+            #out += out_extracted(X)
+            
+            # stuff for tensorboard
+            img_grid = torchvision.utils.make_grid(X)
+            #features = X.reshape(X.shape[0], -1)
+            writer2.add_scalar('Test loss', loss_meter.avg, global_step = step)
+            writer2.add_scalar('Test accuracy', performance_meter.avg, global_step = step)
+            writer2.add_image('Image', img_grid)
+            #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
+            step += 1
+
     # get final performances
     fin_loss = loss_meter.sum if loss_fn is not None else None
     fin_perf = performance_meter.avg
