@@ -5,6 +5,7 @@ import transformation
 import os
 import data
 import train
+import utils
 
 
 if __name__ == "__main__":
@@ -19,7 +20,7 @@ if __name__ == "__main__":
     trainloader, testloader, trainset, _ = data.get_dataloaders(
         root_train, root_test, transform_train, transform_test, batch_size_train, batch_size_test
     )
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = use_gpu_if_possible()
     num_classes = len(trainset.classes)
     net = torchvision.models.resnet50(pretrained=True)
     net.fc = torch.nn.Linear(2048, num_classes)
