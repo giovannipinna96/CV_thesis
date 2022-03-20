@@ -1,6 +1,7 @@
 import torch
 import os
 from torch import Tensor
+import utils
 
 def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int=1):
     '''
@@ -42,9 +43,6 @@ class AverageMeter(object):
         self.count += n
         self.avg = self.sum / self.count
 
-def use_gpu_if_possible():
-    return "cuda:0" if torch.cuda.is_available() else "cpu"
-
 def train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter, performance, device, lr_scheduler): # note: I've added a generic performance to replace accuracy
     for X, y in dataloader:
         X = X.to(device)
@@ -69,14 +67,17 @@ def train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_m
         loss_meter.update(val=loss.item(), n=X.shape[0])
         performance_meter.update(val=acc, n=X.shape[0])
 
-def train_model(model, dataloader, loss_fn, optimizer, num_epochs, checkpoint_loc=None, checkpoint_name="checkpoint.pt", performance=accuracy, lr_scheduler=None, device=None, lr_scheduler_step_on_epoch=True):
+def train_model(
+    model, dataloader, loss_fn, optimizer, num_epochs, checkpoint_loc=None, checkpoint_name="checkpoint.pt",
+     performance=accuracy, lr_scheduler=None, device=None, lr_scheduler_step_on_epoch=True
+     ):
 
     # create the folder for the checkpoints (if it's not None)
     if checkpoint_loc is not None:
         os.makedirs(checkpoint_loc, exist_ok=True)
 
     if device is None:
-        device = use_gpu_if_possible()
+        device = utils.use_gpu_if_possible()
     
     model = model.to(device)
     model.train()
@@ -119,7 +120,7 @@ def test_model(model, dataloader, performance=accuracy, loss_fn=None, device=Non
         loss_meter = AverageMeter()
     
     if device is None:
-        device = use_gpu_if_possible()
+        device = utils.use_gpu_if_possible()
 
     model = model.to(device)
 
