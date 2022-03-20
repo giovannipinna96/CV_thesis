@@ -1,7 +1,10 @@
 import torch
+import torchvision
 import os
 from torch import Tensor
+from torchvision.utils import make_grid 
 import utils
+from torch.utils.tensorboard import SummaryWriter # to print to tensorboard
 
 def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int=1):
     '''
@@ -44,6 +47,8 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 def train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter, performance, device, lr_scheduler): # note: I've added a generic performance to replace accuracy
+    writer = SummaryWriter(f'runs/punzoni/tryout_ternsorboard')
+    step=0
     for X, y in dataloader:
         X = X.to(device)
         y = y.to(device)
@@ -66,6 +71,15 @@ def train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_m
         # 7. update the loss and accuracy AverageMeter
         loss_meter.update(val=loss.item(), n=X.shape[0])
         performance_meter.update(val=acc, n=X.shape[0])
+        
+        # stuff for tensorboard
+        img_grid = torchvision.utils.make_grid(X)
+        #features = X.reshape(X.shape[0], -1)
+        writer.add_scalar('Training loss', loss_meter.avg, global_step = step)
+        writer.add_scalar('Training accuracy', performance_meter.avg, global_step = step)
+        writer.add_image('Image', img_grid)
+        #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
+        step += 1
 
 def train_model(
     model, dataloader, loss_fn, optimizer, num_epochs, checkpoint_loc=None, checkpoint_name="checkpoint.pt",

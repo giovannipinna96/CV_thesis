@@ -31,7 +31,6 @@ if __name__ == "__main__":
         optimizer, milestones=list(range(num_epochs))[5::2], gamma=0.25
         )
     loss_fn = torch.nn.CrossEntropyLoss()
-    
 
     train.train_model(net, trainloader, loss_fn, optimizer, num_epochs, lr_scheduler=scheduler, device=device)
     train.test_model(net, testloader, loss_fn=loss_fn, device=device)
