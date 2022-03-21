@@ -143,6 +143,8 @@ def test_model(model, dataloader, performance=accuracy, loss_fn=None, device=Non
 
     performance_meter = AverageMeter()
 
+    feat_map = []
+
     model.eval()
     with torch.no_grad():
         for X, y in dataloader:
@@ -157,8 +159,8 @@ def test_model(model, dataloader, performance=accuracy, loss_fn=None, device=Non
             performance_meter.update(acc, X.shape[0])
 
             #extract features
-            #out_extracted = utils.extrating_features(model)
-            #out += out_extracted(X)
+            feat_map += utils.extrating_features(model, X)
+            
             
             # stuff for tensorboard
             img_grid = torchvision.utils.make_grid(X)
