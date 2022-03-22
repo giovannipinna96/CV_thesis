@@ -1,7 +1,7 @@
 import utils
 
 class allParameters():
-    def __init__(allParameters, self, root_train="ImageSet/train",
+    def __init__(self, root_train="ImageSet/train",
      root_test="ImageSet/test", weights_save_path="models/model.pt", batch_size_train=32,
       batch_size_test=128, device=utils.use_gpu_if_possible(), model='resnet50',
        pretrained=True, num_epochs=15
