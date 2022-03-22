@@ -175,4 +175,4 @@ def test_model(model, dataloader, performance=accuracy, loss_fn=None, device=Non
     fin_loss = loss_meter.sum if loss_fn is not None else None
     fin_perf = performance_meter.avg
     print(f"TESTING - loss {fin_loss if fin_loss is not None else '--'} - performance {fin_perf:.4f}")
-    return fin_loss, fin_perf
+    return fin_loss, fin_perf, feat_map

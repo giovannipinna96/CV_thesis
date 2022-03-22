@@ -34,7 +34,7 @@ if __name__ == "__main__":
     loss_fn = torch.nn.CrossEntropyLoss()
 
     train.train_model(net, trainloader, loss_fn, optimizer, num_epochs, lr_scheduler=scheduler, device=device)
-    train.test_model(net, testloader, loss_fn=loss_fn, device=device)
+    _ , _ , feat_map = train.test_model(net, testloader, loss_fn=loss_fn, device=device)
 
     os.makedirs(os.path.dirname(weights_save_path), exist_ok=True)
     torch.save(net.state_dict(), weights_save_path)
