@@ -22,7 +22,6 @@ if __name__ == "__main__":
     )
     num_classes = len(trainset.classes)
     net = createNet.create_network(allParams.get_model(), allParams.get_pretrained())
-    #net = torchvision.models.resnet50(pretrained=True)
     net.fc = torch.nn.Linear(2048, num_classes)
 
     optimizer = torch.optim.SGD(net.parameters(), lr=.01, momentum=.9, weight_decay=5e-4)
