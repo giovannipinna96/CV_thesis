@@ -34,9 +34,9 @@ if __name__ == "__main__":
         )
     loss_fn = torch.nn.CrossEntropyLoss()
 
-    #train.train_model(net, trainloader, loss_fn, optimizer, num_epochs, lr_scheduler=scheduler, device=device)
+    train.train_model(net, trainloader, loss_fn, optimizer, num_epochs, lr_scheduler=scheduler, device=device)
     test.test_model(net, testloader, loss_fn=loss_fn, device=device)
-    
+
     #extract features
     feat_map = utils.extrating_features(net, testloader) # is a numpy array
 
