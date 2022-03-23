@@ -8,13 +8,22 @@ import numpy as np
 def use_gpu_if_possible():
     return "cuda:0" if torch.cuda.is_available() else "cpu"
 
-def extrating_features(model, data, return_nodes=['layer4']):
+def extrating_features(model, data, return_nodes=['layer3', 'layer4']):
     train_nodes, eval_nodes = get_graph_node_names(model)
     feat_ext = create_feature_extractor(model, return_nodes=return_nodes)
     with torch.no_grad():
-        out = {}
+        #out = {}
+        all_data = torch.zeros(1,3,256,256)
+        i = 0
         for X, y in data: #problema salva solo l'ultimo batch
-            out = feat_ext(X)
+            if i == 0:
+                all_data = X
+                i = 1
+            else:
+            all_data = torch.concat((all_data, X), dim=0)
+        out = feat_ext(all_data)
     # generalizzare estrazione features per più layer diversi
-    features_map = out['layer4'].numpy().reshape(out['layer4'].shape[0], -1) #qui ci sono anche i 3 canali, noi mettiamo tutto insieme
+    features_map = []
+    for _, layer in enumerate(return_nodes):
+        features_map.append(out[layer].numpy().reshape(out[layer].shape[0], -1)) #qui ci sono anche i 3 canali, noi mettiamo tutto insieme
     return features_map
