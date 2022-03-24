@@ -1,6 +1,10 @@
 import torch
+import torchvision
 import os
 from torch import Tensor
+from torchvision.utils import make_grid 
+import utils
+from torch.utils.tensorboard import SummaryWriter # to print to tensorboard
 
 def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int=1):
     '''
@@ -42,10 +46,9 @@ class AverageMeter(object):
         self.count += n
         self.avg = self.sum / self.count
 
-def use_gpu_if_possible():
-    return "cuda:0" if torch.cuda.is_available() else "cpu"
-
 def train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter, performance, device, lr_scheduler): # note: I've added a generic performance to replace accuracy
+    writer = SummaryWriter(f'runs/punzoni/tryout_ternsorboard')
+    step=0
     for X, y in dataloader:
         X = X.to(device)
         y = y.to(device)
@@ -68,15 +71,27 @@ def train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_m
         # 7. update the loss and accuracy AverageMeter
         loss_meter.update(val=loss.item(), n=X.shape[0])
         performance_meter.update(val=acc, n=X.shape[0])
+        
+        # stuff for tensorboard
+        img_grid = torchvision.utils.make_grid(X)
+        #features = X.reshape(X.shape[0], -1)
+        writer.add_scalar('Training loss', loss_meter.avg, global_step = step)
+        writer.add_scalar('Training accuracy', performance_meter.avg, global_step = step)
+        writer.add_image('Image', img_grid)
+        #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
+        step += 1
 
-def train_model(model, dataloader, loss_fn, optimizer, num_epochs, checkpoint_loc=None, checkpoint_name="checkpoint.pt", performance=accuracy, lr_scheduler=None, device=None, lr_scheduler_step_on_epoch=True):
+def train_model(
+    model, dataloader, loss_fn, optimizer, num_epochs, checkpoint_loc=None, checkpoint_name="checkpoint.pt",
+     performance=accuracy, lr_scheduler=None, device=None, lr_scheduler_step_on_epoch=True
+     ):
 
     # create the folder for the checkpoints (if it's not None)
     if checkpoint_loc is not None:
         os.makedirs(checkpoint_loc, exist_ok=True)
 
     if device is None:
-        device = use_gpu_if_possible()
+        device = utils.use_gpu_if_possible()
     
     model = model.to(device)
     model.train()
@@ -113,32 +128,3 @@ def train_model(model, dataloader, loss_fn, optimizer, num_epochs, checkpoint_lo
 
     return loss_meter.sum, performance_meter.avg
 
-def test_model(model, dataloader, performance=accuracy, loss_fn=None, device=None):
-    # create an AverageMeter for the loss if passed
-    if loss_fn is not None:
-        loss_meter = AverageMeter()
-    
-    if device is None:
-        device = use_gpu_if_possible()
-
-    model = model.to(device)
-
-    performance_meter = AverageMeter()
-
-    model.eval()
-    with torch.no_grad():
-        for X, y in dataloader:
-            X = X.to(device)
-            y = y.to(device)
-            
-            y_hat = model(X)
-            loss = loss_fn(y_hat, y) if loss_fn is not None else None
-            acc = performance(y_hat, y)
-            if loss_fn is not None:
-                loss_meter.update(loss.item(), X.shape[0])
-            performance_meter.update(acc, X.shape[0])
-    # get final performances
-    fin_loss = loss_meter.sum if loss_fn is not None else None
-    fin_perf = performance_meter.avg
-    print(f"TESTING - loss {fin_loss if fin_loss is not None else '--'} - performance {fin_perf:.4f}")
-    return fin_loss, fin_perf
