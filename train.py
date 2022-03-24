@@ -18,7 +18,8 @@ def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int=1):
     # get classes of assignment for the top-k nn_outputs row-wise
     nn_out_classes = nn_output.topk(k).indices
     # make ground_truth a column vector
-    ground_truth_vec = ground_truth.unsqueeze(-1)
+    # non so se è giusto ???
+    ground_truth_vec = ground_truth.unsqueeze(-1).unsqueeze(-1) #aggiunto un .unsqueeze(-1) perchè prima ho aggiunto y_hat.unsqueeze(1)
     # and repeat the column k times (= reproduce nn_out_classes shape)
     ground_truth_vec = ground_truth_vec.expand_as(nn_out_classes)
     # produce tensor of booleans - at which position of the nn output is the correct class located?
@@ -59,6 +60,8 @@ def train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_m
         #    this is the forward pass
         y_hat = model(X)
         # 3. calculate the loss on the current mini-batch
+        #f1, f2 = torch.split(y_hat, [y.shape[0], y.shape[0]], dim=0)
+        y_hat = y_hat.unsqueeze(1)
         if method == 'SupConLoss':
             loss = criterion(y_hat, y)
         elif method == 'SimCLR':
