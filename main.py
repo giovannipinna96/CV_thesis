@@ -5,6 +5,7 @@ import transformation
 import os
 import data
 import train
+import test
 import utils
 from allParameters import allParameters
 import createNet
@@ -30,8 +31,12 @@ if __name__ == "__main__":
         )
     loss_fn = torch.nn.CrossEntropyLoss()
 
+
     train.train_model(net, trainloader, loss_fn, optimizer, allParams.get_num_epochs(), lr_scheduler=scheduler, device=allParams.get_device())
     train.test_model(net, testloader, loss_fn=loss_fn, device=allParams.get_device())
+
+    #extract features
+    feat_map = utils.extrating_features(net, testloader) # is a numpy array
 
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()), exist_ok=True)
     torch.save(net.state_dict(), allParams.get_weights_save_path())
