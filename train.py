@@ -46,7 +46,7 @@ class AverageMeter(object):
         self.count += n
         self.avg = self.sum / self.count
 
-def train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter, performance, device, lr_scheduler): # note: I've added a generic performance to replace accuracy
+def train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter, performance, device, lr_scheduler, criterion, method='SupConLoss'): # note: I've added a generic performance to replace accuracy
     writer = SummaryWriter(f'runs/punzoni/tryout_ternsorboard')
     step=0
     for X, y in dataloader:
@@ -59,7 +59,12 @@ def train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_m
         #    this is the forward pass
         y_hat = model(X)
         # 3. calculate the loss on the current mini-batch
-        loss = loss_fn(y_hat, y)
+        if method == 'SupConLoss':
+            loss = criterion(y_hat, y)
+        elif method == 'SimCLR':
+            loss = criterion(y_hat)
+        else:
+            loss = loss_fn(y_hat, y)
         # 4. execute the backward pass given the current loss
         loss.backward()
         # 5. update the value of the params
@@ -83,7 +88,7 @@ def train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_m
 
 def train_model(
     model, dataloader, loss_fn, optimizer, num_epochs, checkpoint_loc=None, checkpoint_name="checkpoint.pt",
-     performance=accuracy, lr_scheduler=None, device=None, lr_scheduler_step_on_epoch=True
+     performance=accuracy, lr_scheduler=None, device=None, lr_scheduler_step_on_epoch=True, criterion=None
      ):
 
     # create the folder for the checkpoints (if it's not None)
@@ -107,7 +112,7 @@ def train_model(
         
         lr_scheduler_batch = lr_scheduler if not lr_scheduler_step_on_epoch else None
 
-        train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter, performance, device, lr_scheduler_batch)
+        train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter, performance, device, lr_scheduler_batch, criterion=criterion)
 
         print(f"Epoch {epoch+1} completed. Loss - total: {loss_meter.sum:.4f} - average: {loss_meter.avg:.4f}; Performance: {performance_meter.avg:.4f}")
 
