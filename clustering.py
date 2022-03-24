@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-def get_clusters(self, X, n_clusters=17, get_centers=False):
+def get_clusters(self, X, n_clusters=16, get_centers=False):
     y_pred = create_cluster(X, n_clusters, get_centers)
     
     return y_pred
