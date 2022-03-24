@@ -20,7 +20,7 @@ def extrating_features(model, data, return_nodes=['layer3', 'layer4']):
                 all_data = X
                 i = 1
             else:
-            all_data = torch.concat((all_data, X), dim=0)
+                all_data = torch.concat((all_data, X), dim=0)
         out = feat_ext(all_data)
     # generalizzare estrazione features per più layer diversi
     features_map = []
