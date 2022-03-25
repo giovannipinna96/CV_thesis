@@ -10,6 +10,8 @@ import utils
 from allParameters import allParameters
 import createNet
 from lossContrastiveLearning import lossContrastiveLearning
+import pandas as pd
+from clustering import get_clusters
 
 
 if __name__ == "__main__":
@@ -33,11 +35,15 @@ if __name__ == "__main__":
     loss_fn = torch.nn.CrossEntropyLoss()
 
 
-    train.train_model(net, trainloader, loss_fn, optimizer, allParams.get_num_epochs(), lr_scheduler=scheduler, device=allParams.get_device(), criterion=lossContrastiveLearning(temperature=0.07))
-    train.test_model(net, testloader, loss_fn=loss_fn, device=allParams.get_device())
+    #train.train_model(net, trainloader, loss_fn, optimizer, allParams.get_num_epochs(), lr_scheduler=scheduler, device=allParams.get_device(), criterion=lossContrastiveLearning(temperature=0.07))
+    test.test_model(net, testloader, loss_fn=loss_fn, device=allParams.get_device())
 
     #extract features
     feat_map = utils.extrating_features(net, testloader) # is a numpy array
+
+    #give to each features a cluster
+    d = pd.DataFrame(feat_map[1]) # cluster su solo layer4
+    y_cluster_prediction, _, all_distances = get_clusters(d)
 
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()), exist_ok=True)
     torch.save(net.state_dict(), allParams.get_weights_save_path())
