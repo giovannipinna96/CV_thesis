@@ -19,7 +19,7 @@ def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int=1):
     nn_out_classes = nn_output.topk(k).indices
     # make ground_truth a column vector
     # non so se è giusto ???
-    ground_truth_vec = ground_truth.unsqueeze(-1).unsqueeze(-1) #aggiunto un .unsqueeze(-1) perchè prima ho aggiunto y_hat.unsqueeze(1)
+    ground_truth_vec = ground_truth.unsqueeze(-1)#.unsqueeze(-1) #aggiunto un .unsqueeze(-1) perchè prima ho aggiunto y_hat.unsqueeze(1)
     # and repeat the column k times (= reproduce nn_out_classes shape)
     ground_truth_vec = ground_truth_vec.expand_as(nn_out_classes)
     # produce tensor of booleans - at which position of the nn output is the correct class located?
