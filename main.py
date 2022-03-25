@@ -10,6 +10,7 @@ import utils
 from allParameters import allParameters
 import createNet
 from lossContrastiveLearning import lossContrastiveLearning
+import pandas as pd
 
 
 if __name__ == "__main__":
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     feat_map = utils.extrating_features(net, testloader) # is a numpy array
 
     #give to each features a cluster
-    y_cluster_prediction = get_clusters(feat_map)
+    y_cluster_prediction, _ = get_clusters(pd.DataFrame(feat_map))
 
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()), exist_ok=True)
     torch.save(net.state_dict(), allParams.get_weights_save_path())

@@ -13,7 +13,8 @@ def _create_cluster(self, X, n_clusters, get_centers):
     centers_cluster = None
     km = KMeans(n_clusters=n_clusters)
     y_predicted = km.fit_predict(X)
+    all_distances = km_transform(X) #Ciò che kmeans.transform(X) restituisce è già la distanza della norma L2 da ciascun centro del cluster
     if get_centers:
         centers_cluster = km.cluster_centers_
 
-    return y_predicted, centers_cluster
+    return y_predicted, centers_cluster, all_distances
