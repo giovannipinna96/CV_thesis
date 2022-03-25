@@ -39,5 +39,8 @@ if __name__ == "__main__":
     #extract features
     feat_map = utils.extrating_features(net, testloader) # is a numpy array
 
+    #give to each features a cluster
+    y_cluster_prediction = get_clusters(feat_map)
+
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()), exist_ok=True)
     torch.save(net.state_dict(), allParams.get_weights_save_path())
