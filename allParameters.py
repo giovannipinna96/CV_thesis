@@ -4,7 +4,7 @@ class allParameters():
     def __init__(self, root_train="ImageSet/train",
      root_test="ImageSet/test", weights_save_path="models/model.pt", batch_size_train=32,
       batch_size_test=128, device=utils.use_gpu_if_possible(), model='resnet50',
-       pretrained=True, num_epochs=15
+       pretrained=True, num_epochs=15, not_freeze='nothing'
        ):
        self.root_train = root_train
        self.root_test = root_test
@@ -15,6 +15,7 @@ class allParameters():
        self.model = model
        self.pretrained = pretrained
        self.num_epochs = num_epochs
+       self.not_freeze = not_freeze
 
     def get_root_train(self):
         return self.root_train
@@ -66,6 +67,12 @@ class allParameters():
 
     def get_device(self):
         return self.device
+  
+    def get_not_freeze(self):
+        return self.not_freeze
+
+    def set_not_freeze(self, not_freeze):
+        self.not_freeze = not_freeze
 
 
         
