@@ -34,7 +34,7 @@ if __name__ == "__main__":
         )
     loss_fn = torch.nn.CrossEntropyLoss()
 
-    #freeze layers
+    #freeze layers (ma quali?)
     for name, param in net.named_parameters():
         if param.requires_grad and allParams.get_not_freeze() not in name:
              param.requires_grad = False
