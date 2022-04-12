@@ -36,10 +36,14 @@ if __name__ == "__main__":
 
     #freeze layers
     for name, param in net.named_parameters():
-        if param.requires_grad and allParams.not_freeze not in name:
+        if param.requires_grad and allParams.get_not_freeze() not in name:
              param.requires_grad = False
 
-    train.train_model(net, trainloader, loss_fn, optimizer, allParams.get_num_epochs(), lr_scheduler=scheduler, device=allParams.get_device(), criterion=lossContrastiveLearning(temperature=0.07))
+    train.train_model(
+                net, trainloader, loss_fn, optimizer, allParams.get_num_epochs(),
+                lr_scheduler=scheduler, device=allParams.get_device(),
+                criterion=lossContrastiveLearning(temperature=0.07)
+                )
     test.test_model(net, testloader, loss_fn=loss_fn, device=allParams.get_device())
 
     #extract features
