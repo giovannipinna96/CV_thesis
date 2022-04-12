@@ -4,6 +4,7 @@ import torchvision.models as models
 from torchvision.models.feature_extraction import get_graph_node_names
 from torchvision.models.feature_extraction import create_feature_extractor
 import numpy as np
+import allParameters
 
 def use_gpu_if_possible():
     return "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -27,3 +28,15 @@ def extrating_features(model, data, return_nodes=['layer3', 'layer4']):
     for _, layer in enumerate(return_nodes):
         features_map.append(out[layer].numpy().reshape(out[layer].shape[0], -1)) #qui ci sono anche i 3 canali, noi mettiamo tutto insieme
     return features_map
+
+def load_prestParameters(dict):
+    allParams = allParameters(dict.get("root_train"),
+        dict.get("root_test"),
+        dict.get("weights_save_path"),
+        dict.get("batch_size_train"),
+        dict.get("batch_size_test"),
+        dict.get("device"),dict.get("model"),
+        dict.get("pretrained"),
+        dict.get("num_epochs"),
+        dict.get("not_freeze")
+        )
