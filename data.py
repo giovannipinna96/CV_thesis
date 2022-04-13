@@ -35,12 +35,25 @@ class RandomPatch(torch.nn.Module):
 
 
 class PILToTensor(torch.nn.Module):
+    """Class used for transform an PIL image in its tensor rappresentation
+
+    Args:
+        torch (torch.nn.Module)
+    """
+
     def __call__(self, image):
+        # intermediate calculation in numpy array
         tensor = torch.from_numpy(np.array(image)).float()
         return tensor.permute(-1, 0, 1)
 
 
 class To01(torch.nn.Module):
+    """Used to normalize the input tensor
+
+    Args:
+        torch (torch.nn.Module)
+    """
+
     def __call__(self, tensor: torch.Tensor):
         return tensor.sub_(tensor.min()).div_(tensor.max())
 
@@ -65,16 +78,16 @@ def _get_dataloader(dataset, batch_size, shuffle, num_workers, **kwargs):
     return dataloader
 
 
-def get_dataloaders(root_train, root_test, transform_train, transform_test, batch_size_train, batch_size_test, **kwargs):
+def get_dataloaders(
+    root_train, root_test, transform_train, transform_test, batch_size_train, batch_size_test, **kwargs
+):
     trainset = _get_dataset(root_train, transform_train)
     testset = _get_dataset(root_test, transform_test)
 
     # TODO
-    # Aggiungere un sampler al dataloader
-    trainloader = _get_dataloader(
-        trainset, batch_size_train, shuffle=True, num_workers=8, **kwargs)
-    testloader = _get_dataloader(
-        testset, batch_size_test, shuffle=False, num_workers=8, **kwargs)
+    # Aggiungere un sampler al dataloader??
+    trainloader = _get_dataloader(trainset, batch_size_train, shuffle=True, num_workers=8, **kwargs)
+    testloader = _get_dataloader(testset, batch_size_test, shuffle=False, num_workers=8, **kwargs)
     return trainloader, testloader, trainset, testset
 
 
