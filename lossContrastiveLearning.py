@@ -2,7 +2,7 @@
 Author: Yonglong Tian (yonglong@mit.edu)
 Date: May 07, 2020
 """
-from __future__ import print_function  #???
+from __future__ import print_function  # ???
 
 import torch
 import torch.nn as nn
@@ -11,6 +11,7 @@ import torch.nn as nn
 class lossContrastiveLearning(nn.Module):
     """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
     It also supports the unsupervised contrastive loss in SimCLR"""
+
     def __init__(self, temperature=0.07, contrast_mode='all',
                  base_temperature=0.07):
         super(lossContrastiveLearning, self).__init__()
@@ -48,7 +49,8 @@ class lossContrastiveLearning(nn.Module):
         elif labels is not None:
             labels = labels.contiguous().view(-1, 1)
             if labels.shape[0] != batch_size:
-                raise ValueError('Num of labels does not match num of features')
+                raise ValueError(
+                    'Num of labels does not match num of features')
             mask = torch.eq(labels, labels.T).float().to(device)
         else:
             mask = mask.float().to(device)

@@ -2,11 +2,12 @@ import torch
 import torchvision
 import os
 from torch import Tensor
-from torchvision.utils import make_grid 
+from torchvision.utils import make_grid
 import utils
-from torch.utils.tensorboard import SummaryWriter # to print to tensorboard
+from torch.utils.tensorboard import SummaryWriter  # to print to tensorboard
 
-def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int=1):
+
+def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int = 1):
     '''
     Return accuracy@k for the given model output and ground truth
     nn_output: a tensor of shape (num_datapoints x num_classes) which may 
@@ -19,7 +20,8 @@ def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int=1):
     nn_out_classes = nn_output.topk(k).indices
     # make ground_truth a column vector
     # non so se è giusto ???
-    ground_truth_vec = ground_truth.unsqueeze(-1)#.unsqueeze(-1) #aggiunto un .unsqueeze(-1) perchè prima ho aggiunto y_hat.unsqueeze(1)
+    # .unsqueeze(-1) #aggiunto un .unsqueeze(-1) perchè prima ho aggiunto y_hat.unsqueeze(1)
+    ground_truth_vec = ground_truth.unsqueeze(-1)
     # and repeat the column k times (= reproduce nn_out_classes shape)
     ground_truth_vec = ground_truth_vec.expand_as(nn_out_classes)
     # produce tensor of booleans - at which position of the nn output is the correct class located?
@@ -28,10 +30,12 @@ def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int=1):
     acc = correct_items.sum().item() / nn_output.shape[0]
     return acc
 
+
 class AverageMeter(object):
     '''
     a generic class to keep track of performance metrics during training or testing of models
     '''
+
     def __init__(self):
         self.reset()
 
@@ -47,15 +51,20 @@ class AverageMeter(object):
         self.count += n
         self.avg = self.sum / self.count
 
-def train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter, performance, device, lr_scheduler, criterion, method='SupConLoss'): # note: I've added a generic performance to replace accuracy
+
+# note: I've added a generic performance to replace accuracy
+def train_epoch(
+    model, dataloader, loss_fn, optimizer, loss_meter, performance_meter, performance, device,
+    lr_scheduler, criterion, method='SupConLoss'
+):
     writer = SummaryWriter(f'runs/punzoni/tryout_ternsorboard')
-    step=0
+    step = 0
     for X, y in dataloader:
         X = X.to(device)
         y = y.to(device)
         # 1. reset the gradients previously accumulated by the optimizer
         #    this will avoid re-using gradients from previous loops
-        optimizer.zero_grad() 
+        optimizer.zero_grad()
         # 2. get the predictions from the current state of the model
         #    this is the forward pass
         y_hat = model(X)
@@ -79,20 +88,22 @@ def train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_m
         # 7. update the loss and accuracy AverageMeter
         loss_meter.update(val=loss.item(), n=X.shape[0])
         performance_meter.update(val=acc, n=X.shape[0])
-        
+
         # stuff for tensorboard
         img_grid = torchvision.utils.make_grid(X)
         #features = X.reshape(X.shape[0], -1)
-        writer.add_scalar('Training loss', loss_meter.avg, global_step = step)
-        writer.add_scalar('Training accuracy', performance_meter.avg, global_step = step)
+        writer.add_scalar('Training loss', loss_meter.avg, global_step=step)
+        writer.add_scalar('Training accuracy',
+                          performance_meter.avg, global_step=step)
         writer.add_image('Image', img_grid)
         #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
         step += 1
 
+
 def train_model(
     model, dataloader, loss_fn, optimizer, num_epochs, checkpoint_loc=None, checkpoint_name="checkpoint.pt",
-     performance=accuracy, lr_scheduler=None, device=None, lr_scheduler_step_on_epoch=True, criterion=None
-     ):
+    performance=accuracy, lr_scheduler=None, device=None, lr_scheduler_step_on_epoch=True, criterion=None
+):
 
     # create the folder for the checkpoints (if it's not None)
     if checkpoint_loc is not None:
@@ -100,7 +111,7 @@ def train_model(
 
     if device is None:
         device = utils.use_gpu_if_possible()
-    
+
     model = model.to(device)
     model.train()
 
@@ -111,11 +122,13 @@ def train_model(
         performance_meter = AverageMeter()
 
         # added print for LR
-        print(f"Epoch {epoch+1} --- learning rate {optimizer.param_groups[0]['lr']:.5f}")
-        
+        print(
+            f"Epoch {epoch+1} --- learning rate {optimizer.param_groups[0]['lr']:.5f}")
+
         lr_scheduler_batch = lr_scheduler if not lr_scheduler_step_on_epoch else None
 
-        train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter, performance, device, lr_scheduler_batch, criterion=criterion)
+        train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter,
+                    performance, device, lr_scheduler_batch, criterion=criterion)
 
         print(f"Epoch {epoch+1} completed. Loss - total: {loss_meter.sum:.4f} - average: {loss_meter.avg:.4f}; Performance: {performance_meter.avg:.4f}")
 
@@ -126,8 +139,9 @@ def train_model(
                 "optimizer": optimizer.state_dict(),
                 "epoch": epoch
             }
-            torch.save(checkpoint_dict, os.path.join(checkpoint_loc, checkpoint_name))
-        
+            torch.save(checkpoint_dict, os.path.join(
+                checkpoint_loc, checkpoint_name))
+
         if lr_scheduler is not None and lr_scheduler_step_on_epoch:
             if isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                 lr_scheduler.step(loss_meter.avg)
@@ -135,4 +149,3 @@ def train_model(
                 lr_scheduler.step()
 
     return loss_meter.sum, performance_meter.avg
-
