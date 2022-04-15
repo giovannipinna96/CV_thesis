@@ -16,13 +16,10 @@ def create_network(model: str, pretrained=True, not_freeze=None):
     match model:
         case 'resnet50':
             net = torchvision.models.resnet50(pretrained=pretrained)
-            net = torch.nn.Sequential(*(list(model.children())[:-2]))
         case 'resnet18':
             net = torchvision.models.resnet18(pretrained=pretrained)
-            net = torch.nn.Sequential(*(list(model.children())[:-2]))
         case 'resnet101':
             net = torchvision.models.resnet101(pretrained=pretrained)
-            net = torch.nn.Sequential(*(list(model.children())[:-2]))
         case 'vgg16':
             net = torchvision.models.vgg16(pretrained=pretrained)
             # TODO capire che layer eliminare per rendere generale. Probabilmente avgpool e classifier

@@ -19,8 +19,9 @@ def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int = 1):
     # get classes of assignment for the top-k nn_outputs row-wise
     nn_out_classes = nn_output.topk(k).indices
     # make ground_truth a column vector
+    # TODO
     # non so se è giusto ???
-    # .unsqueeze(-1) #aggiunto un .unsqueeze(-1) perchè prima ho aggiunto y_hat.unsqueeze(1)
+    #aggiunto un .unsqueeze(-1) perchè prima ho aggiunto y_hat.unsqueeze(1)
     ground_truth_vec = ground_truth.unsqueeze(-1)
     # and repeat the column k times (= reproduce nn_out_classes shape)
     ground_truth_vec = ground_truth_vec.expand_as(nn_out_classes)
@@ -55,11 +56,13 @@ class AverageMeter(object):
 # note: I've added a generic performance to replace accuracy
 def train_epoch(
     model, dataloader, loss_fn, optimizer, loss_meter, performance_meter, performance, device,
-    lr_scheduler, criterion, method='SupConLoss'
+    lr_scheduler, loss_type
 ):
+    # support for tensorboard
     writer = SummaryWriter(f'runs/punzoni/tryout_ternsorboard')
     step = 0
     for X, y in dataloader:
+        #X = torch.cat([X[0], X[1]], dim=0)
         X = X.to(device)
         y = y.to(device)
         # 1. reset the gradients previously accumulated by the optimizer
@@ -69,14 +72,11 @@ def train_epoch(
         #    this is the forward pass
         y_hat = model(X)
         # 3. calculate the loss on the current mini-batch
-        #f1, f2 = torch.split(y_hat, [y.shape[0], y.shape[0]], dim=0)
-        y_hat = y_hat.unsqueeze(1)
-        if method == 'SupConLoss':
-            loss = criterion(y_hat, y)
-        elif method == 'SimCLR':
-            loss = criterion(y_hat)
-        else:
-            loss = loss_fn(y_hat, y)
+        if loss_type != 'crossEntropy':
+            #f1, f2 = torch.split(y_hat, [y.shape[0], y.shape[0]], dim=0)
+            #y_hat = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
+            y_hat = y_hat.unsqueeze(1) # TODO check if is correct, in the peaper happend something different!!!
+        loss = loss_fn(y_hat, y) 
         # 4. execute the backward pass given the current loss
         loss.backward()
         # 5. update the value of the params
@@ -84,12 +84,15 @@ def train_epoch(
         if lr_scheduler is not None:
             lr_scheduler.step()
         # 6. calculate the accuracy for this mini-batch
-        acc = performance(y_hat, y)
+        if loss_type != 'crossEntropy':
+            acc = performance(y_hat, y.unsqueeze(-1))
+        else:
+            acc = performance(y_hat, y)
         # 7. update the loss and accuracy AverageMeter
         loss_meter.update(val=loss.item(), n=X.shape[0])
         performance_meter.update(val=acc, n=X.shape[0])
 
-        # stuff for tensorboard
+        # stuff for tensorboard support
         img_grid = torchvision.utils.make_grid(X)
         #features = X.reshape(X.shape[0], -1)
         writer.add_scalar('Training loss', loss_meter.avg, global_step=step)
@@ -102,7 +105,7 @@ def train_epoch(
 
 def train_model(
     model, dataloader, loss_fn, optimizer, num_epochs, checkpoint_loc=None, checkpoint_name="checkpoint.pt",
-    performance=accuracy, lr_scheduler=None, device=None, lr_scheduler_step_on_epoch=True, criterion=None
+    performance=accuracy, lr_scheduler=None, device=None, lr_scheduler_step_on_epoch=True, loss_type='crossEntropy'
 ):
 
     # create the folder for the checkpoints (if it's not None)
@@ -128,7 +131,7 @@ def train_model(
         lr_scheduler_batch = lr_scheduler if not lr_scheduler_step_on_epoch else None
 
         train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter,
-                    performance, device, lr_scheduler_batch, criterion=criterion)
+                    performance, device, lr_scheduler_batch, loss_type)
 
         print(f"Epoch {epoch+1} completed. Loss - total: {loss_meter.sum:.4f} - average: {loss_meter.avg:.4f}; Performance: {performance_meter.avg:.4f}")
 
@@ -137,13 +140,17 @@ def train_model(
             checkpoint_dict = {
                 "parameters": model.state_dict(),
                 "optimizer": optimizer.state_dict(),
-                "epoch": epoch
+                "epoch": epoch,
+                "loss sum" : loss_meter.sum,
+                "loss avg" : loss_meter.avg,
+                "preformance_meter" : performance_meter.avg
             }
-            torch.save(checkpoint_dict, os.path.join(
-                checkpoint_loc, checkpoint_name))
+            torch.save(checkpoint_dict, os.path.join(checkpoint_loc, checkpoint_name))
 
         if lr_scheduler is not None and lr_scheduler_step_on_epoch:
+            # Reduce learning rate when a metric has stopped improving. 
             if isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                # Note that step should be called after the validation that is (loss_meter.avg)
                 lr_scheduler.step(loss_meter.avg)
             else:
                 lr_scheduler.step()

@@ -9,7 +9,8 @@ from train import AverageMeter
 from torch.utils.tensorboard import SummaryWriter  # to print to tensorboard
 
 
-def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, device=None):
+def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, device=None, loss_type = None):
+    # for tensorboard
     writer2 = SummaryWriter(f'runs/punzoni/test_model_tensorboard')
     step = 0
     # create an AverageMeter for the loss if passed
@@ -23,8 +24,6 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
 
     performance_meter = AverageMeter()
 
-    feat_map = []
-
     model.eval()
     with torch.no_grad():
         for X, y in dataloader:
@@ -32,13 +31,15 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
             y = y.to(device)
 
             y_hat = model(X)
+            if loss_type != 'crossEntropy':
+                y_hat = y_hat.unsqueeze(1)
             loss = loss_fn(y_hat, y) if loss_fn is not None else None
-            acc = performance(y_hat, y)
+            acc = performance(y_hat, y) #TODO to fix
             if loss_fn is not None:
                 loss_meter.update(loss.item(), X.shape[0])
             performance_meter.update(acc, X.shape[0])
 
-            # stuff for tensorboard
+            # stuff for tensorboard support
             img_grid = torchvision.utils.make_grid(X)
             #features = X.reshape(X.shape[0], -1)
             writer2.add_scalar('Test loss', loss_meter.avg, global_step=step)
@@ -51,6 +52,6 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
     # get final performances
     fin_loss = loss_meter.sum if loss_fn is not None else None
     fin_perf = performance_meter.avg
-    print(
-        f"TESTING - loss {fin_loss if fin_loss is not None else '--'} - performance {fin_perf:.4f}")
+    print(f"TESTING - loss {fin_loss if fin_loss is not None else '--'} - performance {fin_perf:.4f}")
+    
     return fin_loss, fin_perf

@@ -1,12 +1,12 @@
+from re import T
 import torch
-from torch.nn import ModuleList
-import torchvision
 import transformation
 import os
 import data
 import train
 import test
 import utils
+import featureExtraction
 from allParameters import allParameters
 import createNet
 from lossContrastiveLearning import lossContrastiveLearning
@@ -25,7 +25,8 @@ if __name__ == "__main__":
         model='resnet50',
         pretrained=True,
         num_epochs=15,
-        not_freeze='nothing'
+        not_freeze='nothing',
+        loss_type='a'
     )
     # transform the dataset
     transform_train = transformation.get_transform_train()
@@ -48,8 +49,12 @@ if __name__ == "__main__":
                                    allParams.get_not_freeze()
                                    )
 
-    # TODO fix the last layer for normal, extracting features, clustering (the output change)
-    net.fc = torch.nn.Linear(2048, num_classes)
+    if allParams.get_loss_type() == 'crossEntropy':
+        loss_fn = torch.nn.CrossEntropyLoss()
+        net.fc = torch.nn.Linear(in_features=2048, out_features=18, bias=True)
+    else:
+        loss_fn = lossContrastiveLearning(temperature=0.07)
+        net.fc = torch.nn.Linear(in_features=2048, out_features=128, bias=True)
 
     optimizer = torch.optim.SGD(net.parameters(),
                                 lr=.01,
@@ -62,32 +67,31 @@ if __name__ == "__main__":
                                                      gamma=0.25
                                                      )
 
-    # TODO fix the right losso function
-    loss_fn = torch.nn.CrossEntropyLoss()
-
     # train
-    train.train_model(net,
-                      trainloader,
-                      loss_fn,
-                      optimizer,
-                      allParams.get_num_epochs(),
-                      lr_scheduler=scheduler,
-                      device=allParams.get_device(),
-                      criterion=lossContrastiveLearning(temperature=0.07)
-                      )
+ #   train.train_model(net,
+ #                     trainloader,
+ #                     loss_fn,
+ #                     optimizer,
+ #                     allParams.get_num_epochs(),
+ #                     lr_scheduler=scheduler,
+ #                     device=allParams.get_device(),
+ #                     loss_type = allParams.get_loss_type()
+ #                     )
     # test
     test.test_model(net,
                     testloader,
-                    loss_fn=loss_fn,
-                    device=allParams.get_device()
+                    loss_fn = loss_fn,
+                    device=allParams.get_device(),
+                    loss_type = allParams.get_loss_type()
                     )
 
     # extract features
-    feat_map = utils.extrating_features(net, testloader)  # is a numpy array
+    feat_map = featureExtraction.extrating_features(net, testloader, ['layer3', 'layer4'])  # is a numpy array
 
     # give to each features a cluster
     d = pd.DataFrame(feat_map[1])  # cluster su solo layer4
     y_cluster_prediction, _, all_distances = get_clusters(d)
 
-    os.makedirs(os.path.dirname(allParams.get_weights_save_path()), exist_ok=True)
+    os.makedirs(os.path.dirname(
+        allParams.get_weights_save_path()), exist_ok=True)
     torch.save(net.state_dict(), allParams.get_weights_save_path())

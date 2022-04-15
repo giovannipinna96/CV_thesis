@@ -10,7 +10,7 @@ class allParameters():
     def __init__(self, root_train="ImageSet/train",
                  root_test="ImageSet/test", weights_save_path="models/model.pt", batch_size_train=32,
                  batch_size_test=128, model='resnet50',
-                 pretrained=True, num_epochs=15, not_freeze='nothing'
+                 pretrained=True, num_epochs=15, not_freeze='nothing', loss_type='crossEntropy'
                  ):
         self.root_train = root_train
         self.root_test = root_test
@@ -22,6 +22,7 @@ class allParameters():
         self.pretrained = pretrained
         self.num_epochs = num_epochs
         self.not_freeze = not_freeze
+        self.loss_type = loss_type
 
     def get_root_train(self):
         return self.root_train
@@ -79,3 +80,9 @@ class allParameters():
 
     def set_not_freeze(self, not_freeze):
         self.not_freeze = not_freeze
+
+    def get_loss_type(self):
+        return self.loss_type
+
+    def set_loss_type(self, loss_type):
+        self.loss_type = loss_type
