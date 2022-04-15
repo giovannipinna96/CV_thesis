@@ -22,7 +22,7 @@ def kmenas_cluster(X, n_clusters=16, get_centers=True):
 
     return y_predicted, centers_cluster, all_distances
 
-def fuzzy_cluster(X_train, X_test, n_clusters):
+def fuzzy_cluster(X_train, X_test, n_clusters =16):
     fcm = FCM(n_clusters=n_clusters)
     fcm.fit(X_train)
     y_hard = fcm.predict(X_test)
@@ -30,7 +30,7 @@ def fuzzy_cluster(X_train, X_test, n_clusters):
 
     return y_hard, y_soft
 
-def agglomerative_cluster(X, n_clusters=3, affinity='euclidean', linkage='complete'):
+def agglomerative_cluster(X, n_clusters=16, affinity='euclidean', linkage='complete'):
     X_std = scale_features(X)
     ac = AgglomerativeClustering(n_clusters=n_clusters, affinity=affinity, linkage=linkage)
     labels = ac.fit_predict(X_std)
