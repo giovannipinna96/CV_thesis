@@ -11,7 +11,7 @@ from allParameters import allParameters
 import createNet
 from lossContrastiveLearning import lossContrastiveLearning
 import pandas as pd
-from clustering import get_clusters
+from clustering import get_clusters, kmenas_cluster
 
 
 if __name__ == "__main__":
@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     # give to each features a cluster
     d = pd.DataFrame(feat_map[1])  # cluster su solo layer4
-    y_cluster_prediction, _, all_distances = get_clusters(d)
+    y_cluster_prediction, _, all_distances = kmenas_cluster(d)
 
     os.makedirs(os.path.dirname(
         allParams.get_weights_save_path()), exist_ok=True)
