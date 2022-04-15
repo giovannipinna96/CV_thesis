@@ -11,7 +11,7 @@ def _scale_features(data):
 
 
 def dim_reduction_pca(X, y, n_components=2):
-    """Perform sklearn PCA.
+    """Perform sklearn PCA after a data normalization.
 
     Args:
         X (_type_): our data
@@ -33,7 +33,7 @@ def dim_reduction_pca(X, y, n_components=2):
 
 
 def dim_reduction_lda(X, y, n_components=None):
-    """Perform sklearn LDA.
+    """Perform sklearn LDA after a data normalization.
 
     Args:
         X (_type_): our data
@@ -53,7 +53,7 @@ def dim_reduction_lda(X, y, n_components=None):
 
 
 def dim_reduction_tSNE(X, n_components=2, learning_rate='auto', init='random', n_iter=1000):
-    """Perform skelarn t-SNE. 
+    """Perform skelarn t-SNE after a data normalization.
 
     Args:
         X (_type_): our data
@@ -71,7 +71,7 @@ def dim_reduction_tSNE(X, n_components=2, learning_rate='auto', init='random', n
 
 
 def dim_reduction_umap(X, n_components=2, init='random', random_state=0):
-    """Perform UMAP. Used the libary "umap-learn".
+    """Perform UMAP after a data normalization. For perform UMAP has been used the libary "umap-learn".
 
     Args:
         X (_type_): our data
