@@ -26,7 +26,7 @@ if __name__ == "__main__":
         pretrained=True,
         num_epochs=15,
         not_freeze='nothing',
-        loss_type='a'
+        loss_type='crossEntropy'
     )
     # transform the dataset
     transform_train = transformation.get_transform_train()
@@ -68,15 +68,15 @@ if __name__ == "__main__":
                                                      )
 
     # train
- #   train.train_model(net,
- #                     trainloader,
- #                     loss_fn,
- #                     optimizer,
- #                     allParams.get_num_epochs(),
- #                     lr_scheduler=scheduler,
- #                     device=allParams.get_device(),
- #                     loss_type = allParams.get_loss_type()
- #                     )
+    train.train_model(net,
+                      trainloader,
+                      loss_fn,
+                      optimizer,
+                      allParams.get_num_epochs(),
+                      lr_scheduler=scheduler,
+                      device=allParams.get_device(),
+                      loss_type = allParams.get_loss_type()
+                      )
     # test
     test.test_model(net,
                     testloader,
