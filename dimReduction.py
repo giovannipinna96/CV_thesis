@@ -1,13 +1,9 @@
-from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.manifold import TSNE
 from umap import UMAP
 
-
-def _scale_features(data):
-    sc = StandardScaler()
-    return sc.fit_transform(data)
+from utils import scale_features
 
 
 def dim_reduction_pca(X, y, n_components=2):
@@ -24,7 +20,7 @@ def dim_reduction_pca(X, y, n_components=2):
         Third:  array that contains the singular values that pca found
     """
     pca = PCA(n_components=n_components)
-    X_std = _scale_features(X)
+    X_std = scale_features(X)
     pca.fit(X_std, y)
     X_reducted = pca.transform(X_std)
     explained_variance_ratio = pca.explained_variance_ratio_
@@ -45,7 +41,7 @@ def dim_reduction_lda(X, y, n_components=None):
         Second: array that contain the explained variance ratio
     """
     lda = LinearDiscriminantAnalysis(n_components=n_components)
-    X_std = _scale_features(X)
+    X_std = scale_features(X)
     lda.fit(X_std, y)
     X_reducted = lda.transform(X_std)
     explained_variance_ratio = lda.explained_variance_ratio_
@@ -65,7 +61,7 @@ def dim_reduction_tSNE(X, n_components=2, learning_rate='auto', init='random', n
     Returns:
         numpy.ndarray: matrix that contain the new value of the data reducted with t-SNE
     """
-    X_std = _scale_features(X)
+    X_std = scale_features(X)
     return TSNE(n_components=n_components, learning_rate=learning_rate,
                 init=init, n_iter=n_iter).fit_transform(X_std)
 
@@ -82,5 +78,5 @@ def dim_reduction_umap(X, n_components=2, init='random', random_state=0):
     Returns:
         numpy.ndarray: matrix that contain the new value of the data reducted with UMAP
     """
-    X_std = _scale_features(X)
+    X_std = scale_features(X)
     return UMAP(n_components=n_components, init=init, random_state=random_state).fit_transform(X_std)
