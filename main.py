@@ -68,22 +68,22 @@ if __name__ == "__main__":
                                                      )
 
     # train
-    train.train_model(net,
-                      trainloader,
-                      loss_fn,
-                      optimizer,
-                      allParams.get_num_epochs(),
-                      lr_scheduler=scheduler,
-                      device=allParams.get_device(),
-                      loss_type = allParams.get_loss_type()
-                      )
+#    train.train_model(net,
+#                      trainloader,
+#                      loss_fn,
+#                      optimizer,
+#                      allParams.get_num_epochs(),
+#                      lr_scheduler=scheduler,
+#                      device=allParams.get_device(),
+#                      loss_type = allParams.get_loss_type()
+#                      )
     # test
-    test.test_model(net,
-                    testloader,
-                    loss_fn = loss_fn,
-                    device=allParams.get_device(),
-                    loss_type = allParams.get_loss_type()
-                    )
+#    test.test_model(net,
+#                    testloader,
+#                    loss_fn = loss_fn,
+#                    device=allParams.get_device(),
+#                    loss_type = allParams.get_loss_type()
+#                    )
 
     # extract features
     feat_map = featureExtraction.extrating_features(net, testloader, ['layer3', 'layer4'])  # is a numpy array
