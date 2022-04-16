@@ -30,4 +30,4 @@ def scale_features(data):
 
 def save(data, name_file):
     os.makedirs(os.path.dirname(f'data/'), exist_ok=True)
-    pd.DataFrame(data).to_csv(f'data/{nome_file}.csv')
+    pd.DataFrame(data).to_csv(f'data/{name_file}.csv')
