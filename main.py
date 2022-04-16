@@ -11,7 +11,7 @@ from allParameters import allParameters
 import createNet
 from lossContrastiveLearning import lossContrastiveLearning
 import pandas as pd
-from clustering import kmenas_cluster
+from clustering import kmeans_cluster
 import numpy as np
 
 
@@ -96,8 +96,7 @@ if __name__ == "__main__":
     feat_map = featureExtraction.extrating_features(net, testloader, ['layer3', 'layer4'])  # is a numpy array
 
     # give to each features a cluster
-    d = pd.DataFrame(feat_map[1])  # cluster su solo layer4
-    y_cluster_prediction, _, all_distances = kmenas_cluster(d)
+    y_cluster_prediction, _, all_distances = kmenas_cluster(feat_map[1])
 
     os.makedirs(os.path.dirname(
         allParams.get_weights_save_path()), exist_ok=True)
