@@ -1,6 +1,7 @@
 import torch
 from torchvision.models.feature_extraction import get_graph_node_names
 from torchvision.models.feature_extraction import create_feature_extractor
+import numpy as np
 
 
 def extrating_features(model, data, return_nodes: list):

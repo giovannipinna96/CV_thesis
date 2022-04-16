@@ -11,7 +11,8 @@ from allParameters import allParameters
 import createNet
 from lossContrastiveLearning import lossContrastiveLearning
 import pandas as pd
-from clustering import get_clusters, kmenas_cluster
+from clustering import kmenas_cluster
+import numpy as np
 
 
 if __name__ == "__main__":
@@ -51,10 +52,16 @@ if __name__ == "__main__":
 
     if allParams.get_loss_type() == 'crossEntropy':
         loss_fn = torch.nn.CrossEntropyLoss()
-        net.fc = torch.nn.Linear(in_features=2048, out_features=18, bias=True)
+        if allParams.get_model() == 'vgg16':
+            net.classifier[6] = torch.nn.Linear(in_features=4096, out_features=18, bias=True)
+        else:
+            net.fc = torch.nn.Linear(in_features=2048, out_features=18, bias=True)
     else:
         loss_fn = lossContrastiveLearning(temperature=0.07)
-        net.fc = torch.nn.Linear(in_features=2048, out_features=128, bias=True)
+        if allParams.get_model() == 'vgg16':
+            net.classifier[6] = torch.nn.Linear(in_features=4096, out_features=128, bias=True)
+        else:
+            net.fc = torch.nn.Linear(in_features=2048, out_features=128, bias=True)
 
     optimizer = torch.optim.SGD(net.parameters(),
                                 lr=.01,

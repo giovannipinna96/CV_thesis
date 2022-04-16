@@ -11,15 +11,13 @@ from sklearn.cluster import DBSCAN
 from utils import scale_features
 
 
-def kmenas_cluster(X, n_clusters=16, get_centers=True):
+def kmenas_cluster(X, n_clusters=16):
     X_std = scale_features(X)
-    centers_cluster = None
     km = KMeans(n_clusters=n_clusters)
     all_distances = km.fit_transform(X_std)
     # Ciò che kmeans.transform(X) restituisce è già la distanza della norma L2 da ciascun centro del cluster
-    y_predicted = km.predict(X_std)  # TODO fix ???
-    if get_centers:
-        centers_cluster = km.cluster_centers_
+    y_predicted = km.predict(X_std) 
+    centers_cluster = km.cluster_centers_
 
     return y_predicted, centers_cluster, all_distances
 

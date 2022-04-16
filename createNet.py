@@ -22,7 +22,6 @@ def create_network(model: str, pretrained=True, not_freeze=None):
             net = torchvision.models.resnet101(pretrained=pretrained)
         case 'vgg16':
             net = torchvision.models.vgg16(pretrained=pretrained)
-            # TODO capire che layer eliminare per rendere generale. Probabilmente avgpool e classifier
 
     return _not_freeze(_freeze_all(net), not_freeze)
 

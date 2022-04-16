@@ -34,7 +34,7 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
             if loss_type != 'crossEntropy':
                 y_hat = y_hat.unsqueeze(1)
             loss = loss_fn(y_hat, y) if loss_fn is not None else None
-            acc = performance(y_hat.squeeze(1), y) #TODO to fix
+            acc = performance(y_hat.squeeze(1), y) #TODO check if is correct
             if loss_fn is not None:
                 loss_meter.update(loss.item(), X.shape[0])
             performance_meter.update(acc, X.shape[0])
