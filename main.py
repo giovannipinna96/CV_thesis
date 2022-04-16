@@ -11,7 +11,7 @@ from allParameters import allParameters
 import createNet
 from lossContrastiveLearning import lossContrastiveLearning
 import pandas as pd
-from clustering import kmeans_cluster
+from clustering import kmenas_cluster
 import numpy as np
 
 
