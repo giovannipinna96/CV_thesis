@@ -1,4 +1,5 @@
 import torch
+from sklearn.preprocessing import StandardScaler
 import allParameters
 import numpy as np
 import pandas as pd
@@ -25,3 +26,8 @@ def load_prestParameters(dict):
 def save(data, name_file):
     os.makedirs(os.path.dirname(f'data/'), exist_ok=True)
     pd.DataFrame(data).to_csv(f'data/{name_file}.csv')
+
+def scale_features(data):
+    sc = StandardScaler()
+    return sc.fit_transform(data), sc.fit(data)
+

@@ -4,9 +4,8 @@ from sklearn.cluster import KMeans
 from fcmeans import FCM
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import DBSCAN
-from sklearn.preprocessing import StandardScaler
 
-from utils import save
+from utils import save, scale_features
 
 
 class clustering_methods():
@@ -25,7 +24,7 @@ class clustering_methods():
     def kmenas_cluster(self, X, n_clusters=16, must_save=True):
         self.km = None
         self.sc_km = None
-        X_std, self.sc_km = _scale_features(X)
+        X_std, self.sc_km = scale_features(X)
         km = KMeans(n_clusters=n_clusters)
         all_distances = km.fit_transform(X_std)
         # Ciò che kmeans.transform(X) restituisce è già la distanza della norma L2 da ciascun centro del cluster
@@ -46,7 +45,7 @@ class clustering_methods():
     def fuzzy_cluster(self, X, n_clusters=16, must_save=True):
         self.fcm = None
         self.sc_fcm = None
-        X_std, self.sc_fcm = _scale_features(X)
+        X_std, self.sc_fcm = scale_features(X)
         fcm = FCM(n_clusters=n_clusters)
         fcm.fit(X_std)
         y_fcm_hard = fcm.predict(X_std)
@@ -67,7 +66,7 @@ class clustering_methods():
     def agglomerative_cluster(self, X, n_clusters=16, affinity='euclidean', linkage='complete', must_save=True):
         self.ac = None
         self.sc_ac = None
-        X_std, self.sc_ac = _scale_features(X)
+        X_std, self.sc_ac = scale_features(X)
         ac = AgglomerativeClustering(
             n_clusters=n_clusters, affinity=affinity, linkage=linkage)
         y_ac = ac.fit_predict(X_std)
@@ -84,7 +83,7 @@ class clustering_methods():
     def dbscan_cluster(self, X, eps=0.2, min_samples=5, metric='euclidean', must_save=True):
         self.db = None
         self.sc_db = None
-        X_std, self.sc_db = _scale_features(X)
+        X_std, self.sc_db = scale_features(X)
         db = DBSCAN(eps=eps, min_samples=min_samples, metric=metric)
         y_db = db.fit_predict(X_std)
         if must_save:
@@ -155,7 +154,3 @@ def all_clustering(X):
     y_db = cluster_obj.dbscan_cluster(X)
 
     return cluster_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db
-
-def _scale_features(data):
-    sc = StandardScaler()
-    return sc.fit_transform(data), sc.fit(data)
