@@ -101,9 +101,9 @@ if __name__ == "__main__":
         net, testloader, ['layer3', 'layer4'])  # is a numpy array
 
     # give to each features a cluster
-    clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(
-        feat_map[1])
+    clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[1])
 
-    os.makedirs(os.path.dirname(
-        allParams.get_weights_save_path()), exist_ok=True)
+    os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
+                                exist_ok=True
+                                )
     torch.save(net.state_dict(), allParams.get_weights_save_path())
