@@ -1,5 +1,4 @@
 import torch
-from sklearn.preprocessing import StandardScaler
 import allParameters
 import numpy as np
 import pandas as pd
@@ -21,11 +20,6 @@ def load_prestParameters(dict):
                               dict.get("num_epochs"),
                               dict.get("not_freeze")
                               )
-
-
-def scale_features(data):
-    sc = StandardScaler()
-    return sc.fit_transform(data)
 
 
 def save(data, name_file):
