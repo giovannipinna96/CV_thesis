@@ -27,7 +27,9 @@ if __name__ == "__main__":
         pretrained=True,
         num_epochs=15,
         not_freeze='nothing',
-        loss_type='crossEntropy'
+        loss_type='crossEntropy',
+        out_net=18,
+        is_feature_extraction=True
     )
     # transform the dataset
     transform_train = transformation.get_transform_train()
@@ -54,18 +56,18 @@ if __name__ == "__main__":
         loss_fn = torch.nn.CrossEntropyLoss()
         if allParams.get_model() == 'vgg16':
             net.classifier[6] = torch.nn.Linear(
-                in_features=4096, out_features=18, bias=True)
+                in_features=4096, out_features=allParams.get_out_net(), bias=True)
         else:
             net.fc = torch.nn.Linear(
-                in_features=2048, out_features=18, bias=True)
+                in_features=2048, out_features=allParams.get_out_net(), bias=True)
     else:
         loss_fn = lossContrastiveLearning(temperature=0.07)
         if allParams.get_model() == 'vgg16':
             net.classifier[6] = torch.nn.Linear(
-                in_features=4096, out_features=128, bias=True)
+                in_features=4096, out_features=allParams.get_out_net(), bias=True)
         else:
             net.fc = torch.nn.Linear(
-                in_features=2048, out_features=128, bias=True)
+                in_features=2048, out_features=allParams.get_out_net(), bias=True)
 
     optimizer = torch.optim.SGD(net.parameters(),
                                 lr=.01,
@@ -96,14 +98,16 @@ if __name__ == "__main__":
 #                    loss_type = allParams.get_loss_type()
 #                    )
 
-    # extract features
-    feat_map, feat_map_labels = featureExtraction.extrating_features(
-        net, testloader, ['layer3', 'layer4'])  # is a numpy array
+    if allParams.get_is_feature_extraction:
+        # extract features
+        feat_map, feat_map_labels = featureExtraction.extrating_features(
+            net, testloader, ['layer3', 'layer4'])  # is a numpy array
 
-    # give to each features a cluster
-    clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[1])
+        # give to each features a cluster
+        clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(
+            feat_map[1])
 
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
-                                exist_ok=True
-                                )
+                exist_ok=True
+                )
     torch.save(net.state_dict(), allParams.get_weights_save_path())
