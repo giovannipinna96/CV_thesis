@@ -13,6 +13,7 @@ from lossContrastiveLearning import lossContrastiveLearning
 import pandas as pd
 from clustering import all_clustering, clustering_methods
 import numpy as np
+from svm import svm_methods
 
 
 if __name__ == "__main__":
@@ -104,9 +105,15 @@ if __name__ == "__main__":
             net, testloader, ['layer3', 'layer4'])  # is a numpy array
 
         # give to each features a cluster
-        clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(
-            feat_map[1])
+        #clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(
+        #    feat_map[1])
+        #cluster_obj = clustering_methods()
+        #y_pred_km, _, _ = cluster_obj.kmenas_cluster(feat_map[1])
 
+        #svm with features
+        svm_obj = svm_methods()
+        svm_obj.create_linear_svm(feat_map[1], feat_map_labels)
+        pred = svm_obj.predict_linear_svm(feat_map[1])
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
                 exist_ok=True
                 )

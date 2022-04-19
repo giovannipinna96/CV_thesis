@@ -1,7 +1,6 @@
 # TODO creare obj come per clustering e fare svm linear and not linear con grid search
 import pstats
 from sklearn.svm import SVC, NuSVC
-from sklearn.pipeline import make_pipeline
 
 from utils import scale_features
 from sklearn.model_selection import GridSearchCV
@@ -19,29 +18,31 @@ class svm_methods():
             'kernel': ['rbf']
         }
 
-    def linear_svm(self, X, y):
+    def create_linear_svm(self, X, y):
         self.linear_svm = None
-        clf = make_pipeline(scale_features(), SVC(gamma='auto'))
-        clf.fit(X, y)
+        X_std, _ = scale_features(X)
+        clf = SVC(gamma='auto')
+        clf.fit(X_std, y)
         self.linear_svm = clf
 
     def predict_linear_svm(self, X):
         return self.linear_svm.predict(X)
 
-    def not_linear_svm(self, X, y):
+    def create_not_linear_svm(self, X, y):
         self.not_linear_svm = None
-        clf = make_pipeline(scale_features(), NuSVC(gamma='auto'))
-        clf.fit(X, y)
+        X_std, _ = scale_features(X)
+        clf = NuSVC(gamma='auto')
+        clf.fit(X_std, y)
         self.not_linear_svm = clf
 
     def predict_not_linear_svm(self, X):
         # TODO dovrebbe esistere il predict ma non lo trovo
         return self.not_linear_svm.predict(X)
 
-    def grid_serach_svm(self, clf, X, y):
+    def create_grid_serach_svm(self, clf, X, y):
         self.grid_serach_svm = None
         self.grid_best_parameters = None
-        X_std = scale_features(X)
+        X_std, _ = scale_features(X)
         grid_clf = GridSearchCV(clf, self.param_grid)
         grid_clf.fit(X_std, y)
         self.grid_serach_svm = grid_clf
