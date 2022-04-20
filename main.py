@@ -101,8 +101,8 @@ if __name__ == "__main__":
 
     if allParams.get_is_feature_extraction:
         # extract features
-        feat_map, feat_map_labels = featureExtraction.extrating_features(
-            net, testloader, ['layer3', 'layer4'])  # is a numpy array
+ #       feat_map, feat_map_labels = featureExtraction.extrating_features(
+ #           net, testloader, ['layer3', 'layer4'])  # is a numpy array
 
         # give to each features a cluster
         #clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(
@@ -111,9 +111,13 @@ if __name__ == "__main__":
         #y_pred_km, _, _ = cluster_obj.kmenas_cluster(feat_map[1])
 
         #svm with features
-        svm_obj = svm_methods()
-        svm_obj.create_linear_svm(feat_map[1], feat_map_labels)
-        pred = svm_obj.predict_linear_svm(feat_map[1])
+  #      svm_obj = svm_methods()
+  #      svm_obj.create_linear_svm(feat_map[1], feat_map_labels)
+  #      pred = svm_obj.predict_linear_svm(feat_map[1])
+
+    #save objects
+        utils.save_obj(file_name="pp", first = allParams, second = net)
+
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
                 exist_ok=True
                 )
