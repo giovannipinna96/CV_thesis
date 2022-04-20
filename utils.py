@@ -60,5 +60,4 @@ def save_obj(file_name : str = "pickle" , **kwargs ):
 def load_pickle_obj(file_name : str = "pickle"):
     with open(f"{file_name}", "rb") as pickle_in:
         pickle_obj = pickle.load(pickle_in)
-        print(pickle_obj)
     return pickle_obj
