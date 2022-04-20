@@ -56,19 +56,27 @@ if __name__ == "__main__":
     if allParams.get_loss_type() == 'crossEntropy':
         loss_fn = torch.nn.CrossEntropyLoss()
         if allParams.get_model() == 'vgg16':
-            net.classifier[6] = torch.nn.Linear(
-                in_features=4096, out_features=allParams.get_out_net(), bias=True)
+            net.classifier[6] = torch.nn.Linear(in_features=4096,
+                                                out_features=allParams.get_out_net(),
+                                                bias=True
+                                                )
         else:
-            net.fc = torch.nn.Linear(
-                in_features=2048, out_features=allParams.get_out_net(), bias=True)
+            net.fc = torch.nn.Linear(in_features=2048,
+                                     out_features=allParams.get_out_net(),
+                                     bias=True
+                                     )
     else:
         loss_fn = lossContrastiveLearning(temperature=0.07)
         if allParams.get_model() == 'vgg16':
-            net.classifier[6] = torch.nn.Linear(
-                in_features=4096, out_features=allParams.get_out_net(), bias=True)
+            net.classifier[6] = torch.nn.Linear(in_features=4096,
+                                                out_features=allParams.get_out_net(),
+                                                bias=True
+                                                )
         else:
-            net.fc = torch.nn.Linear(
-                in_features=2048, out_features=allParams.get_out_net(), bias=True)
+            net.fc = torch.nn.Linear(in_features=2048,
+                                     out_features=allParams.get_out_net(),
+                                     bias=True
+                                     )
 
     optimizer = torch.optim.SGD(net.parameters(),
                                 lr=.01,
@@ -82,41 +90,58 @@ if __name__ == "__main__":
                                                      )
 
     # train
-#    train.train_model(net,
-#                      trainloader,
-#                      loss_fn,
-#                      optimizer,
-#                      allParams.get_num_epochs(),
-#                      lr_scheduler=scheduler,
-#                      device=allParams.get_device(),
-#                      loss_type = allParams.get_loss_type()
-#                      )
+    train.train_model(net,
+                      trainloader,
+                      loss_fn,
+                      optimizer,
+                      allParams.get_num_epochs(),
+                      lr_scheduler=scheduler,
+                      device=allParams.get_device(),
+                      loss_type=allParams.get_loss_type()
+                      )
     # test
-#    test.test_model(net,
-#                    testloader,
-#                    loss_fn = loss_fn,
-#                    device=allParams.get_device(),
-#                    loss_type = allParams.get_loss_type()
-#                    )
+    test.test_model(net,
+                    testloader,
+                    loss_fn=loss_fn,
+                    device=allParams.get_device(),
+                    loss_type=allParams.get_loss_type()
+                    )
 
     if allParams.get_is_feature_extraction:
         # extract features
- #       feat_map, feat_map_labels = featureExtraction.extrating_features(
- #           net, testloader, ['layer3', 'layer4'])  # is a numpy array
+        feat_map, feat_map_labels = featureExtraction.extrating_features(net,
+                                                                         testloader,
+                                                                         ['layer3', 'layer4']
+                                                                         )  # is a numpy array
 
         # give to each features a cluster
-        #clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(
-        #    feat_map[1])
-        #cluster_obj = clustering_methods()
-        #y_pred_km, _, _ = cluster_obj.kmenas_cluster(feat_map[1])
+        clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[1])
 
-        #svm with features
-  #      svm_obj = svm_methods()
-  #      svm_obj.create_linear_svm(feat_map[1], feat_map_labels)
-  #      pred = svm_obj.predict_linear_svm(feat_map[1])
+        # svm with features
+        svm_obj = svm_methods()
+        svm_obj.create_linear_svm(feat_map[1], feat_map_labels)
+        pred = svm_obj.predict_linear_svm(feat_map[1])
 
-    #save objects
-        utils.save_obj(file_name="pp", first = allParams, second = net)
+        # save objects
+        utils.save_obj(file_name="pickle_feat_extraction",
+                       first=feat_map,
+                       second=feat_map_labels,
+                       third=clusters_obj,
+                       fourth=[y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db],
+                       fifth=svm_obj
+                       )
+
+    utils.save_obj(file_name="pickle",
+                   first=allParams,
+                   second=net,
+                   third=transform_train,
+                   fourth=transform_test,
+                   fifth=trainloader,
+                   sixth=testloader,
+                   seventh=loss_fn,
+                   eighth=optimizer,
+                   ninth=scheduler
+                   )
 
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
                 exist_ok=True
