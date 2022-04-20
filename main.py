@@ -44,7 +44,7 @@ if __name__ == "__main__":
                                                                 allParams.get_batch_size_train(),
                                                                 allParams.get_batch_size_test()
                                                                 )
-
+    #define the number of different classes
     num_classes = len(trainset.classes)
 
     # import the basic net
@@ -52,7 +52,7 @@ if __name__ == "__main__":
                                    allParams.get_pretrained(),
                                    allParams.get_not_freeze()
                                    )
-
+    # define the loss function and set the last part/layer of the network
     if allParams.get_loss_type() == 'crossEntropy':
         loss_fn = torch.nn.CrossEntropyLoss()
         if allParams.get_model() == 'vgg16':
@@ -77,12 +77,13 @@ if __name__ == "__main__":
                                      out_features=allParams.get_out_net(),
                                      bias=True
                                      )
-
+    # set optimizer
     optimizer = torch.optim.SGD(net.parameters(),
                                 lr=.01,
                                 momentum=.9,
                                 weight_decay=5e-4
                                 )
+    # set scheduler
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer,
                                                      milestones=list(
                                                          range(allParams.get_num_epochs()))[5::2],
@@ -107,6 +108,7 @@ if __name__ == "__main__":
                     loss_type=allParams.get_loss_type()
                     )
 
+
     if allParams.get_is_feature_extraction:
         # extract features
         feat_map, feat_map_labels = featureExtraction.extrating_features(net,
@@ -117,12 +119,12 @@ if __name__ == "__main__":
         # give to each features a cluster
         clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[1])
 
-        # svm with features
+        # perform svm with features
         svm_obj = svm_methods()
         svm_obj.create_linear_svm(feat_map[1], feat_map_labels)
         pred = svm_obj.predict_linear_svm(feat_map[1])
 
-        # save objects
+        # save the features extraction objects
         utils.save_obj(file_name="pickle_feat_extraction",
                        first=feat_map,
                        second=feat_map_labels,
@@ -131,6 +133,7 @@ if __name__ == "__main__":
                        fifth=svm_obj
                        )
 
+    # save all general opbject for reproduce the experiment
     utils.save_obj(file_name="pickle",
                    first=allParams,
                    second=net,
@@ -143,6 +146,7 @@ if __name__ == "__main__":
                    ninth=scheduler
                    )
 
+    # save network weights
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
                 exist_ok=True
                 )
