@@ -1,6 +1,4 @@
 from sklearn.cluster import KMeans
-#  difference between MinMaxScaler and scale_features (io porto tutto con mean=0 and std=1)
-# (https://stackoverflow.com/questions/51237635/difference-between-standard-scaler-and-minmaxscaler)
 from fcmeans import FCM
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import DBSCAN
@@ -9,6 +7,10 @@ from utils import save, scale_features
 
 
 class clustering_methods():
+    """Useful object to manage cluster methods. Inside, the various models fitted to the data are saved.
+    Each function that creates clustering models saves the return values 
+    ​​in csv files if the must_save flag is equal to True
+    """
     def __init__(self):
         self.km = None
         self.fcm = None
@@ -21,13 +23,13 @@ class clustering_methods():
         self.sc_db = None
 
 
-    def kmenas_cluster(self, X, n_clusters=16, must_save=True):
+    def kmenas_cluster(self, X, n_clusters : int =16, must_save : bool =True):
         self.km = None
         self.sc_km = None
         X_std, self.sc_km = scale_features(X)
         km = KMeans(n_clusters=n_clusters)
         all_distances = km.fit_transform(X_std)
-        # Ciò che kmeans.transform(X) restituisce è già la distanza della norma L2 da ciascun centro del cluster
+        # What kmeans.transform(X) already returns is the distance of the norm L2 from each center of the cluster
         y_km = km.predict(X_std)
         centers_cluster = km.cluster_centers_
         if must_save:
@@ -42,7 +44,7 @@ class clustering_methods():
         y_predicted = self.km.predict(X_std)
         return y_predicted
 
-    def fuzzy_cluster(self, X, n_clusters=16, must_save=True):
+    def fuzzy_cluster(self, X, n_clusters : int =16, must_save : bool =True):
         self.fcm = None
         self.sc_fcm = None
         X_std, self.sc_fcm = scale_features(X)
@@ -63,7 +65,7 @@ class clustering_methods():
         y_predicted_soft = self.fcm.soft_predict(X_std)
         return y_predicted_hard, y_predicted_soft
 
-    def agglomerative_cluster(self, X, n_clusters=16, affinity='euclidean', linkage='complete', must_save=True):
+    def agglomerative_cluster(self, X, n_clusters : int =16, affinity : str ='euclidean', linkage : str ='complete', must_save : bool =True):
         self.ac = None
         self.sc_ac = None
         X_std, self.sc_ac = scale_features(X)
@@ -80,7 +82,7 @@ class clustering_methods():
         y_predicted = self.ac.predict(X_std)
         return y_predicted
 
-    def dbscan_cluster(self, X, eps=0.2, min_samples=5, metric='euclidean', must_save=True):
+    def dbscan_cluster(self, X, eps=0.2, min_samples : int =5, metric : str='euclidean', must_save : bool=True):
         self.db = None
         self.sc_db = None
         X_std, self.sc_db = scale_features(X)

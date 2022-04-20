@@ -1,4 +1,3 @@
-# TODO creare obj come per clustering e fare svm linear and not linear con grid search
 import pstats
 from sklearn.svm import SVC, NuSVC
 
@@ -7,6 +6,11 @@ from sklearn.model_selection import GridSearchCV
 
 
 class svm_methods():
+    """Object used to manage the various types of svm.
+    It saves the various svm models fitted on the input data when calling the various functions.
+    When this object is created all values ​​are set to None except
+    a dictionary containing some default parameters to use the internal function gridSearch()
+    """
     def __init__(self):
         self.linear_svm = None
         self.not_linear_svm = None
@@ -36,10 +40,17 @@ class svm_methods():
         self.not_linear_svm = clf
 
     def predict_not_linear_svm(self, X):
-        # TODO dovrebbe esistere il predict ma non lo trovo
         return self.not_linear_svm.predict(X)
 
     def create_grid_serach_svm(self, clf, X, y):
+        """Function that calls sklearn's grid Search object.
+        The function saves the gridSearch and best parameters inside the object (itselfs)
+
+        Args:
+            clf (_type_): classifier to be used in grid Search
+            X (_type_): data
+            y (_type_): labels
+        """
         self.grid_serach_svm = None
         self.grid_best_parameters = None
         X_std, _ = scale_features(X)
@@ -66,7 +77,7 @@ class svm_methods():
     def get_grid_search_svm(self):
         return self.grid_serach_svm
 
-    def set_param_grid(self, new_param_grid):
+    def set_param_grid(self, new_param_grid : dict):
         self.get_param_grid = new_param_grid
 
     def add_value_param_grid(self, key: str, values: list):
