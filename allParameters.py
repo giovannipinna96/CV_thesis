@@ -1,4 +1,3 @@
-from operator import is_
 import utils
 
 
@@ -38,6 +37,13 @@ class allParameters():
         return self.is_feature_extraction
 
     def set_is_feature_extraction(self, is_feature_extraction: bool):
+        """Function used to see if the user wants to execute the code also to extract the features
+        from the various intermediate layers of the network.
+        This was done because that part of the code can be computationally expensive.
+
+        Args:
+            is_feature_extraction (bool): if True it will execute the code to extract the features from the intermediate layers of the network
+        """
         self.is_feature_extraction = is_feature_extraction
 
     def get_root_train(self):
@@ -80,6 +86,13 @@ class allParameters():
         return self.pretrained
 
     def set_pretrained(self, pretrained: bool):
+        """Function to set the pretrained value.
+        This value allows us to decide if we want to use a network trained with ImageNet weights
+         or if we want to start an entire workout from scratch.
+
+        Args:
+            pretrained (bool): if True will use the net for ImageNet weight training
+        """
         self.pretrained = pretrained
 
     def get_num_epochs(self):
@@ -94,7 +107,13 @@ class allParameters():
     def get_not_freeze(self):
         return self.not_freeze
 
-    def set_not_freeze(self, not_freeze: str):
+    def set_not_freeze(self, not_freeze: list):
+        """Function to set the not_freeze value in the object of type allParameters ().
+        In the not_freeze list we insert all the layers of the network that we will have required_grad = True
+
+        Args:
+            not_freeze (list): list where insert all the layers of the network that we will have required_grad = True
+        """
         self.not_freeze = not_freeze
 
     def get_loss_type(self):

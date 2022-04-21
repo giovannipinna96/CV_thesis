@@ -2,7 +2,7 @@ import torchvision
 import torch
 
 
-def create_network(model: str, pretrained=True, not_freeze=None):
+def create_network(model: str, pretrained : bool =True, not_freeze=None):
     """This function allows you to load the network to be used for recognition
 
     Args:

@@ -6,7 +6,7 @@ from umap import UMAP
 from utils import scale_features
 
 
-def dim_reduction_pca(X, y, n_components=2):
+def dim_reduction_pca(X, y, n_components : int =2):
     """Perform sklearn PCA after a data normalization.
 
     Args:
@@ -48,7 +48,7 @@ def dim_reduction_lda(X, y, n_components=None):
     return X_reducted, explained_variance_ratio
 
 
-def dim_reduction_tSNE(X, n_components=2, learning_rate='auto', init='random', n_iter=1000):
+def dim_reduction_tSNE(X, n_components : int =2, learning_rate : str ='auto', init : str='random', n_iter : int=1000):
     """Perform skelarn t-SNE after a data normalization.
 
     Args:
@@ -66,7 +66,7 @@ def dim_reduction_tSNE(X, n_components=2, learning_rate='auto', init='random', n
                 init=init, n_iter=n_iter).fit_transform(X_std)
 
 
-def dim_reduction_umap(X, n_components=2, init='random', random_state=0):
+def dim_reduction_umap(X, n_components : int =2, init : str='random', random_state : int =0):
     """Perform UMAP after a data normalization. For perform UMAP has been used the libary "umap-learn".
 
     Args:
