@@ -108,7 +108,7 @@ if __name__ == "__main__":
                     loss_type=allParams.get_loss_type()
                     )
 
-
+    # controllas and it is necessary to extract the features
     if allParams.get_is_feature_extraction:
         # extract features
         feat_map, feat_map_labels = featureExtraction.extrating_features(net,
