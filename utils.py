@@ -94,3 +94,11 @@ def load_pickle_obj(file_name : str = "pickle"):
     with open(f"{file_name}", "rb") as pickle_in:
         pickle_obj = pickle.load(pickle_in)
     return pickle_obj
+
+class TwoCropTransform:
+    """Create two crops of the same image"""
+    def __init__(self, transform):
+        self.transform = transform
+
+    def __call__(self, x):
+        return [self.transform(x), self.transform(x)]
