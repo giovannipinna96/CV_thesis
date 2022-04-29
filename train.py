@@ -62,9 +62,10 @@ def train_epoch(
     writer = SummaryWriter(f'runs/punzoni/tryout_ternsorboard')
     step = 0
     for X, y in dataloader:
-        #X = torch.cat([X[0], X[1]], dim=0)
+        X = torch.cat([X[0], X[1]], dim=0)
         X = X.to(device)
         y = y.to(device)
+        bsz = y.shape[0]
         # 1. reset the gradients previously accumulated by the optimizer
         #    this will avoid re-using gradients from previous loops
         optimizer.zero_grad()
@@ -73,9 +74,9 @@ def train_epoch(
         y_hat = model(X)
         # 3. calculate the loss on the current mini-batch
         if loss_type != 'crossEntropy':
-            #f1, f2 = torch.split(y_hat, [y.shape[0], y.shape[0]], dim=0)
-            #y_hat = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
-            y_hat = y_hat.unsqueeze(1) # TODO check if is correct, in the peaper happend something different!!!
+            f1, f2 = torch.split(y_hat, [bsz,bsz], dim=0)
+            y_hat = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
+          #  y_hat = y_hat.unsqueeze(1) # TODO check if is correct, in the peaper happend something different!!!
         loss = loss_fn(y_hat, y) 
         # 4. execute the backward pass given the current loss
         loss.backward()
@@ -84,9 +85,9 @@ def train_epoch(
         if lr_scheduler is not None:
             lr_scheduler.step()
         # 6. calculate the accuracy for this mini-batch
-        if loss_type != 'crossEntropy':
-            acc = performance(y_hat, y.unsqueeze(-1))
-        else:
+ #       if loss_type != 'crossEntropy':
+ #           acc = performance(y_hat, y.unsqueeze(-1))
+ #       else:
             acc = performance(y_hat, y)
         # 7. update the loss and accuracy AverageMeter
         loss_meter.update(val=loss.item(), n=X.shape[0])
