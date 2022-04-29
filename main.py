@@ -14,6 +14,7 @@ import pandas as pd
 from clustering import all_clustering, clustering_methods
 import numpy as np
 from svm import svm_methods
+import predictNet
 
 
 if __name__ == "__main__":
@@ -37,7 +38,7 @@ if __name__ == "__main__":
     transform_test = transformation.get_transform_test()
 
     # split the dataset
-    trainloader, testloader, trainset, _ = data.get_dataloaders(allParams.get_root_train(),
+    trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
                                                                 allParams.get_root_test(),
                                                                 transform_train,
                                                                 transform_test,
@@ -108,6 +109,8 @@ if __name__ == "__main__":
                     loss_type=allParams.get_loss_type()
                     )
 
+    #feat from normal predict
+    feat_predict = predictNet(net, testset)
     # controllas and it is necessary to extract the features
     if allParams.get_is_feature_extraction:
         # extract features
