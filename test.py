@@ -25,16 +25,25 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
     performance_meter = AverageMeter()
 
     model.eval()
+    save_values_test = []
     with torch.no_grad():
         for X, y in dataloader:
+            if loss_type != 'crossEntropy':
+                X = torch.cat([X[0], X[1]], dim=0)
             X = X.to(device)
             y = y.to(device)
+            bsz = y.shape[0]
 
             y_hat = model(X)
+            
             if loss_type != 'crossEntropy':
-                y_hat = y_hat.unsqueeze(1)
+                f1, f2 = torch.split(y_hat, [bsz,bsz], dim=0)
+                y_hat = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
             loss = loss_fn(y_hat, y) if loss_fn is not None else None
-            acc = performance(y_hat.squeeze(1), y) #TODO check if is correct
+            if loss_type != 'crossEntropy':
+                acc = performance(y_hat, y.unsqueeze(-1))
+            else:
+                acc = performance(y_hat, y)
             if loss_fn is not None:
                 loss_meter.update(loss.item(), X.shape[0])
             performance_meter.update(acc, X.shape[0])
@@ -47,6 +56,9 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
                 'Test accuracy', performance_meter.avg, global_step=step)
             writer2.add_image('Image', img_grid)
             #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
+            # TODO save loss and accurancy
+            save_values_test.append(loss_meter.avg)
+            save_values_test.append(performance_meter.avg)
             step += 1
 
     # get final performances
@@ -54,4 +66,5 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
     fin_perf = performance_meter.avg
     print(f"TESTING - loss {fin_loss if fin_loss is not None else '--'} - performance {fin_perf:.4f}")
     
+    utils.save_obj(file_name="save_values_test", first=save_values_test)
     return fin_loss, fin_perf

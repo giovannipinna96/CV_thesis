@@ -19,9 +19,6 @@ def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int = 1):
     # get classes of assignment for the top-k nn_outputs row-wise
     nn_out_classes = nn_output.topk(k).indices
     # make ground_truth a column vector
-    # TODO
-    # non so se è giusto ???
-    #aggiunto un .unsqueeze(-1) perchè prima ho aggiunto y_hat.unsqueeze(1)
     ground_truth_vec = ground_truth.unsqueeze(-1)
     # and repeat the column k times (= reproduce nn_out_classes shape)
     ground_truth_vec = ground_truth_vec.expand_as(nn_out_classes)
@@ -61,10 +58,13 @@ def train_epoch(
     # support for tensorboard
     writer = SummaryWriter(f'runs/punzoni/tryout_ternsorboard')
     step = 0
+    save_values = []
     for X, y in dataloader:
-        #X = torch.cat([X[0], X[1]], dim=0)
+        if loss_type != 'crossEntropy':
+            X = torch.cat([X[0], X[1]], dim=0)
         X = X.to(device)
         y = y.to(device)
+        bsz = y.shape[0]
         # 1. reset the gradients previously accumulated by the optimizer
         #    this will avoid re-using gradients from previous loops
         optimizer.zero_grad()
@@ -73,9 +73,8 @@ def train_epoch(
         y_hat = model(X)
         # 3. calculate the loss on the current mini-batch
         if loss_type != 'crossEntropy':
-            #f1, f2 = torch.split(y_hat, [y.shape[0], y.shape[0]], dim=0)
-            #y_hat = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
-            y_hat = y_hat.unsqueeze(1) # TODO check if is correct, in the peaper happend something different!!!
+            f1, f2 = torch.split(y_hat, [bsz,bsz], dim=0)
+            y_hat = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
         loss = loss_fn(y_hat, y) 
         # 4. execute the backward pass given the current loss
         loss.backward()
@@ -100,7 +99,12 @@ def train_epoch(
                           performance_meter.avg, global_step=step)
         writer.add_image('Image', img_grid)
         #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
+        # TODO save loss and accurancy
+        save_values.append(loss_meter.avg)
+        save_values.append(performance_meter.avg)
         step += 1
+    
+    return save_values
 
 
 def train_model(
@@ -119,6 +123,7 @@ def train_model(
     model.train()
 
     # epoch loop
+    save_values_train = []
     for epoch in range(num_epochs):
 
         loss_meter = AverageMeter()
@@ -129,9 +134,10 @@ def train_model(
             f"Epoch {epoch+1} --- learning rate {optimizer.param_groups[0]['lr']:.5f}")
 
         lr_scheduler_batch = lr_scheduler if not lr_scheduler_step_on_epoch else None
-
-        train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter,
+        v1, v2 = train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter,
                     performance, device, lr_scheduler_batch, loss_type)
+        save_values_train.append(v1)
+        save_values_train.append(v2)
 
         print(f"Epoch {epoch+1} completed. Loss - total: {loss_meter.sum:.4f} - average: {loss_meter.avg:.4f}; Performance: {performance_meter.avg:.4f}")
 
@@ -154,5 +160,5 @@ def train_model(
                 lr_scheduler.step(loss_meter.avg)
             else:
                 lr_scheduler.step()
-
+    utils.save_obj(file_name="save_value_train", first= save_values_train)
     return loss_meter.sum, performance_meter.avg
