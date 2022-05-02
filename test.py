@@ -55,6 +55,8 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
                 'Test accuracy', performance_meter.avg, global_step=step)
             writer2.add_image('Image', img_grid)
             #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
+            # TODO save loss and accurancy
+
             step += 1
 
     # get final performances

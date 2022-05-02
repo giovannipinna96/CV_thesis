@@ -129,26 +129,29 @@ if __name__ == "__main__":
                                                                          )  # is a numpy array
 
         # give to each features a cluster
-        list_results = []
+        list_results_clustering = []
+        list_results_svm = []
         for i in range(len(feat_map)):
             clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[i])
-            list_results.append(list(zip(clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db)))
+            list_results_clustering.append(list(zip(clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db)))
 
-        # perform svm with features #TODO ma è da fare cluesring e svm separato?
-        svm_obj = svm_methods()
-        svm_obj.create_linear_svm(feat_map[1], feat_map_labels)
-        pred = svm_obj.predict_linear_svm(feat_map[1])
+            # perform svm with features #TODO ma è da fare cluesring e svm separato?
 
-        # save the features extraction objects #TODO check what is importat to save
+            svm_obj = svm_methods()
+            svm_obj.create_linear_svm(feat_map[i], feat_map_labels)
+            pred = svm_obj.predict_linear_svm(feat_map[i])
+            list_results_svm.append(list(zip(svm_obj, pred)))
+
+        # save the features extraction objects
         utils.save_obj(file_name="pickle_feat_extraction",
                        first=feat_map,
                        second=feat_map_labels,
-                       third=list_results,
-                       fourth=svm_obj
+                       third=list_results_clustering,
+                       fourth=list_results_svm
                        )
 
     # save all general opbject for reproduce the experiment
-    utils.save_obj(file_name="pickle",
+    utils.save_obj(file_name="pickle_general",
                    first=allParams,
                    second=net,
                    third=transform_train,

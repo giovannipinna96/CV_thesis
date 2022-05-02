@@ -19,9 +19,6 @@ def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int = 1):
     # get classes of assignment for the top-k nn_outputs row-wise
     nn_out_classes = nn_output.topk(k).indices
     # make ground_truth a column vector
-    # TODO
-    # non so se è giusto ???
-    #aggiunto un .unsqueeze(-1) perchè prima ho aggiunto y_hat.unsqueeze(1)
     ground_truth_vec = ground_truth.unsqueeze(-1)
     # and repeat the column k times (= reproduce nn_out_classes shape)
     ground_truth_vec = ground_truth_vec.expand_as(nn_out_classes)
@@ -77,7 +74,6 @@ def train_epoch(
         if loss_type != 'crossEntropy':
             f1, f2 = torch.split(y_hat, [bsz,bsz], dim=0)
             y_hat = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
-          #  y_hat = y_hat.unsqueeze(1) # TODO check if is correct, in the peaper happend something different!!!
         loss = loss_fn(y_hat, y) 
         # 4. execute the backward pass given the current loss
         loss.backward()
@@ -102,6 +98,7 @@ def train_epoch(
                           performance_meter.avg, global_step=step)
         writer.add_image('Image', img_grid)
         #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
+        # TODO save loss and accurancy
         step += 1
 
 
