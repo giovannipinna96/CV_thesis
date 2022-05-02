@@ -135,8 +135,6 @@ if __name__ == "__main__":
             clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[i])
             list_results_clustering.append(list([clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db]))
 
-            # perform svm with features #TODO ma è da fare cluesring e svm separato?
-
             svm_obj = svm_methods()
             svm_obj.create_linear_svm(feat_map[i], feat_map_labels)
             pred = svm_obj.predict_linear_svm(feat_map[i])
