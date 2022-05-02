@@ -25,7 +25,7 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
     performance_meter = AverageMeter()
 
     model.eval()
-    save_values_test = list(range(2))
+    save_values_test = []
     with torch.no_grad():
         for X, y in dataloader:
             if loss_type != 'crossEntropy':
@@ -57,8 +57,8 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
             writer2.add_image('Image', img_grid)
             #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
             # TODO save loss and accurancy
-            save_values_test[0].append(loss_meter.avg)
-            save_values_test[1].append(performance_meter.avg)
+            save_values_test.append(loss_meter.avg)
+            save_values_test.append(performance_meter.avg)
             step += 1
 
     # get final performances

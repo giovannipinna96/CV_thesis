@@ -58,7 +58,7 @@ def train_epoch(
     # support for tensorboard
     writer = SummaryWriter(f'runs/punzoni/tryout_ternsorboard')
     step = 0
-    save_values = list(range(2))
+    save_values = []
     for X, y in dataloader:
         if loss_type != 'crossEntropy':
             X = torch.cat([X[0], X[1]], dim=0)
@@ -100,8 +100,8 @@ def train_epoch(
         writer.add_image('Image', img_grid)
         #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
         # TODO save loss and accurancy
-        save_values[0].append(loss_meter.avg)
-        save_values[1].append(performance_meter.avg)
+        save_values.append(loss_meter.avg)
+        save_values.append(performance_meter.avg)
         step += 1
     
     return save_values
@@ -123,7 +123,7 @@ def train_model(
     model.train()
 
     # epoch loop
-    save_values_train = list(range(2))
+    save_values_train = []
     for epoch in range(num_epochs):
 
         loss_meter = AverageMeter()
@@ -134,11 +134,10 @@ def train_model(
             f"Epoch {epoch+1} --- learning rate {optimizer.param_groups[0]['lr']:.5f}")
 
         lr_scheduler_batch = lr_scheduler if not lr_scheduler_step_on_epoch else None
-
-        save_values_train.append(
-            train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter,
+        v1, v2 = train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter,
                     performance, device, lr_scheduler_batch, loss_type)
-                    )
+        save_values_train.append(v1)
+        save_values_train.append(v2)
 
         print(f"Epoch {epoch+1} completed. Loss - total: {loss_meter.sum:.4f} - average: {loss_meter.avg:.4f}; Performance: {performance_meter.avg:.4f}")
 
