@@ -116,24 +116,28 @@ if __name__ == "__main__":
         # extract features
         feat_map, feat_map_labels = featureExtraction.extrating_features(net,
                                                                          testloader,
-                                                                         ['layer3', 'layer4']
+                                                                         ['layer1','layer2','layer3', 'layer4']
                                                                          )  # is a numpy array
 
         # give to each features a cluster
-        clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[1])
+        list_results = []
+        for i in range(len(feat_map)):
+            clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[i])
+            list_results.append(list(zip(clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db)))
 
-        # perform svm with features
+        # perform svm with features #TODO ma è da fare cluesring e svm separato?
         svm_obj = svm_methods()
         svm_obj.create_linear_svm(feat_map[1], feat_map_labels)
         pred = svm_obj.predict_linear_svm(feat_map[1])
 
-        # save the features extraction objects
+        # save the features extraction objects #TODO check what is importat to save
         utils.save_obj(file_name="pickle_feat_extraction",
                        first=feat_map,
                        second=feat_map_labels,
                        third=clusters_obj,
                        fourth=[y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db],
-                       fifth=svm_obj
+                       fifth=svm_obj,
+                       sixth = list_results
                        )
 
     # save all general opbject for reproduce the experiment
