@@ -40,7 +40,7 @@ if __name__ == "__main__":
     # split the dataset
     trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
                                                                 allParams.get_root_test(),
-                                                                transform_train,
+                                                                utils.TwoCropTransform(transform_train),
                                                                 transform_test,
                                                                 allParams.get_batch_size_train(),
                                                                 allParams.get_batch_size_test()
