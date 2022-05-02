@@ -29,7 +29,7 @@ if __name__ == "__main__":
         pretrained=True,
         num_epochs=15,
         not_freeze='nothing',
-        loss_type='a',
+        loss_type='crossEntropy',
         out_net=18,
         is_feature_extraction=True
     )
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
                                                                     allParams.get_root_test(),
                                                                     utils.TwoCropTransform(transform_train),
-                                                                    transform_test,
+                                                                    utils.TwoCropTransform(transform_test),
                                                                     allParams.get_batch_size_train(),
                                                                     allParams.get_batch_size_test()
                                                                     )
@@ -101,15 +101,15 @@ if __name__ == "__main__":
                                                      )
 
     # train
-    train.train_model(net,
-                      trainloader,
-                      loss_fn,
-                      optimizer,
-                      allParams.get_num_epochs(),
-                      lr_scheduler=scheduler,
-                      device=allParams.get_device(),
-                      loss_type=allParams.get_loss_type()
-                      )
+#    train.train_model(net,
+#                      trainloader,
+#                      loss_fn,
+#                      optimizer,
+#                      allParams.get_num_epochs(),
+#                      lr_scheduler=scheduler,
+#                      device=allParams.get_device(),
+#                      loss_type=allParams.get_loss_type()
+#                      )
     # test
     test.test_model(net,
                     testloader,

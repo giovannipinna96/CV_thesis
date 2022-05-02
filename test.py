@@ -27,15 +27,22 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
     model.eval()
     with torch.no_grad():
         for X, y in dataloader:
+            if loss_type != 'crossEntropy':
+                X = torch.cat([X[0], X[1]], dim=0)
             X = X.to(device)
             y = y.to(device)
+            bsz = y.shape[0]
 
             y_hat = model(X)
-       #     if loss_type != 'crossEntropy':
-       #         y_hat = y_hat.unsqueeze(1)
+            
+            if loss_type != 'crossEntropy':
+                f1, f2 = torch.split(y_hat, [bsz,bsz], dim=0)
+                y_hat = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
             loss = loss_fn(y_hat, y) if loss_fn is not None else None
-            #acc = performance(y_hat.squeeze(1), y) #TODO check if is correct
-            acc = performance(y_hat, y)
+            if loss_type != 'crossEntropy':
+                acc = performance(y_hat, y.unsqueeze(-1))
+            else:
+                acc = performance(y_hat, y)
             if loss_fn is not None:
                 loss_meter.update(loss.item(), X.shape[0])
             performance_meter.update(acc, X.shape[0])
