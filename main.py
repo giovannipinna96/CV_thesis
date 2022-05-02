@@ -101,22 +101,22 @@ if __name__ == "__main__":
                                                      )
 
     # train
-#    train.train_model(net,
-#                      trainloader,
-#                      loss_fn,
-#                      optimizer,
-#                      allParams.get_num_epochs(),
-#                      lr_scheduler=scheduler,
-#                      device=allParams.get_device(),
-#                      loss_type=allParams.get_loss_type()
-#                      )
+    train.train_model(net,
+                      trainloader,
+                      loss_fn,
+                      optimizer,
+                      allParams.get_num_epochs(),
+                      lr_scheduler=scheduler,
+                      device=allParams.get_device(),
+                      loss_type=allParams.get_loss_type()
+                      )
     # test
-#    test.test_model(net,
-#                    testloader,
-#                    loss_fn=loss_fn,
-#                    device=allParams.get_device(),
-#                    loss_type=allParams.get_loss_type()
-#                    )
+    test.test_model(net,
+                    testloader,
+                    loss_fn=loss_fn,
+                    device=allParams.get_device(),
+                    loss_type=allParams.get_loss_type()
+                    )
 
     #feat from normal predict
     feat_predict, feat_predict_leables = predictNet(net, testloader)
