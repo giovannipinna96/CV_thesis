@@ -14,6 +14,7 @@ import pandas as pd
 from clustering import all_clustering, clustering_methods
 import numpy as np
 from svm import svm_methods
+import predictNet
 
 
 if __name__ == "__main__":
@@ -37,7 +38,7 @@ if __name__ == "__main__":
     transform_test = transformation.get_transform_test()
 
     # split the dataset
-    trainloader, testloader, trainset, _ = data.get_dataloaders(allParams.get_root_train(),
+    trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
                                                                 allParams.get_root_test(),
                                                                 transform_train,
                                                                 transform_test,
@@ -108,29 +109,35 @@ if __name__ == "__main__":
                     loss_type=allParams.get_loss_type()
                     )
 
+    #feat from normal predict
+    feat_predict = predictNet(net, testset)
     # controllas and it is necessary to extract the features
     if allParams.get_is_feature_extraction:
         # extract features
         feat_map, feat_map_labels = featureExtraction.extrating_features(net,
                                                                          testloader,
-                                                                         ['layer3', 'layer4']
+                                                                         ['layer1','layer2','layer3', 'layer4']
                                                                          )  # is a numpy array
 
         # give to each features a cluster
-        clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[1])
+        list_results = []
+        for i in range(len(feat_map)):
+            clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[i])
+            list_results.append(list(zip(clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db)))
 
-        # perform svm with features
+        # perform svm with features #TODO ma è da fare cluesring e svm separato?
         svm_obj = svm_methods()
         svm_obj.create_linear_svm(feat_map[1], feat_map_labels)
         pred = svm_obj.predict_linear_svm(feat_map[1])
 
-        # save the features extraction objects
+        # save the features extraction objects #TODO check what is importat to save
         utils.save_obj(file_name="pickle_feat_extraction",
                        first=feat_map,
                        second=feat_map_labels,
                        third=clusters_obj,
                        fourth=[y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db],
-                       fifth=svm_obj
+                       fifth=svm_obj,
+                       sixth = list_results
                        )
 
     # save all general opbject for reproduce the experiment
