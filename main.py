@@ -133,14 +133,14 @@ if __name__ == "__main__":
         list_results_svm = []
         for i in range(len(feat_map)):
             clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[i])
-            list_results_clustering.append(list(zip(clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db)))
+            list_results_clustering.append(list([clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db]))
 
             # perform svm with features #TODO ma è da fare cluesring e svm separato?
 
             svm_obj = svm_methods()
             svm_obj.create_linear_svm(feat_map[i], feat_map_labels)
             pred = svm_obj.predict_linear_svm(feat_map[i])
-            list_results_svm.append(list(zip(svm_obj, pred)))
+            list_results_svm.append(list([svm_obj, pred]))
 
         # save the features extraction objects
         utils.save_obj(file_name="pickle_feat_extraction",
