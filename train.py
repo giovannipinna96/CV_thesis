@@ -62,7 +62,8 @@ def train_epoch(
     writer = SummaryWriter(f'runs/punzoni/tryout_ternsorboard')
     step = 0
     for X, y in dataloader:
-        X = torch.cat([X[0], X[1]], dim=0)
+        if loss_type != 'crossEntropy':
+            X = torch.cat([X[0], X[1]], dim=0)
         X = X.to(device)
         y = y.to(device)
         bsz = y.shape[0]
@@ -85,9 +86,9 @@ def train_epoch(
         if lr_scheduler is not None:
             lr_scheduler.step()
         # 6. calculate the accuracy for this mini-batch
- #       if loss_type != 'crossEntropy':
- #           acc = performance(y_hat, y.unsqueeze(-1))
- #       else:
+        if loss_type != 'crossEntropy':
+            acc = performance(y_hat, y.unsqueeze(-1))
+        else:
             acc = performance(y_hat, y)
         # 7. update the loss and accuracy AverageMeter
         loss_meter.update(val=loss.item(), n=X.shape[0])

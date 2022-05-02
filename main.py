@@ -29,7 +29,7 @@ if __name__ == "__main__":
         pretrained=True,
         num_epochs=15,
         not_freeze='nothing',
-        loss_type='crossEntropy',
+        loss_type='a',
         out_net=18,
         is_feature_extraction=True
     )
@@ -38,13 +38,22 @@ if __name__ == "__main__":
     transform_test = transformation.get_transform_test()
 
     # split the dataset
-    trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
-                                                                allParams.get_root_test(),
-                                                                utils.TwoCropTransform(transform_train),
-                                                                transform_test,
-                                                                allParams.get_batch_size_train(),
-                                                                allParams.get_batch_size_test()
-                                                                )
+    if allParams.get_loss_type() != 'crossEntropy':
+        trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
+                                                                    allParams.get_root_test(),
+                                                                    utils.TwoCropTransform(transform_train),
+                                                                    transform_test,
+                                                                    allParams.get_batch_size_train(),
+                                                                    allParams.get_batch_size_test()
+                                                                    )
+    else:
+         trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
+                                                                    allParams.get_root_test(),
+                                                                    transform_train,
+                                                                    transform_test,
+                                                                    allParams.get_batch_size_train(),
+                                                                    allParams.get_batch_size_test()
+                                                                    )                                                               
     #define the number of different classes
     num_classes = len(trainset.classes)
 
