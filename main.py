@@ -143,10 +143,8 @@ if __name__ == "__main__":
         utils.save_obj(file_name="pickle_feat_extraction",
                        first=feat_map,
                        second=feat_map_labels,
-                       third=clusters_obj,
-                       fourth=[y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db],
-                       fifth=svm_obj,
-                       sixth = list_results
+                       third=list_results,
+                       fourth=svm_obj
                        )
 
     # save all general opbject for reproduce the experiment
