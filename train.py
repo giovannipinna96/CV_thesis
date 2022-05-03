@@ -99,7 +99,7 @@ def train_epoch(
                           performance_meter.avg, global_step=step)
         writer.add_image('Image', img_grid)
         #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
-        # TODO save loss and accurancy
+        # save loss and accurancy
         save_values.append(loss_meter.avg)
         save_values.append(performance_meter.avg)
         step += 1
