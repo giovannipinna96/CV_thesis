@@ -106,9 +106,8 @@ if __name__ == "__main__":
                                 )
     # set scheduler
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer,
-                                                     milestones=list(
-                                                         range(allParams.get_num_epochs()))[5::2],
-                                                     gamma=0.25
+                                                     milestones=[50,75],
+                                                     gamma=0.1
                                                      )
 
     # train
