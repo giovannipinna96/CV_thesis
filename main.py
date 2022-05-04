@@ -25,6 +25,7 @@ if __name__ == "__main__":
     parser.add_argument("--root_test", type=str, default="ImageSet/test")
     parser.add_argument("--loss_type", type=str, default="crossEntropy")
     parser.add_argument("--out_net", type=int, default=18)
+    parser.add_argument("--is_feature_extraction", type=bool, default=True)
     parser.add_argument
     args = parser.parse_args()
     # set all parameters
@@ -40,7 +41,7 @@ if __name__ == "__main__":
         not_freeze='nothing',
         loss_type=args.loss_type,
         out_net=args.out_net,
-        is_feature_extraction=True
+        is_feature_extraction=args.is_feature_extraction
     )
     # transform the dataset
     transform_train = transformation.get_transform_train()
