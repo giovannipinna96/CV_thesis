@@ -26,13 +26,14 @@ if __name__ == "__main__":
     parser.add_argument("--loss_type", type=str, default="crossEntropy")
     parser.add_argument("--out_net", type=int, default=18)
     parser.add_argument("--is_feature_extraction", type=bool, default=True)
+    parser.add_argument("--weights_save_path", type=str, default="models/model.pt")
     parser.add_argument
     args = parser.parse_args()
     # set all parameters
     allParams = allParameters(
         root_train=args.root_train,
         root_test=args.root_test,
-        weights_save_path="models/model.pt",
+        weights_save_path=args.weights_save_path,
         batch_size_train=32,
         batch_size_test=128,
         model='resnet50',
@@ -111,6 +112,7 @@ if __name__ == "__main__":
                                                      )
 
     # train
+    print('Start Train')
     train.train_model(net,
                       trainloader,
                       loss_fn,
@@ -121,6 +123,7 @@ if __name__ == "__main__":
                       loss_type=allParams.get_loss_type()
                       )
     # test
+    print('Start Test')
     test.test_model(net,
                     testloader,
                     loss_fn=loss_fn,
@@ -129,10 +132,12 @@ if __name__ == "__main__":
                     )
 
     #feat from normal predict
+    print('Predict Net')
     feat_predict, feat_predict_leables = predictNet(net, testloader, allParams.get_device())
     # controllas and it is necessary to extract the features
     if allParams.get_is_feature_extraction:
         # extract features
+        print('Extracting features ...')
         feat_map, feat_map_labels = featureExtraction.extrating_features(net, allParams.get_device(),
                                                                          testloader,
                                                                          ['layer1','layer2','layer3', 'layer4']
@@ -141,16 +146,21 @@ if __name__ == "__main__":
         # give to each features a cluster
         list_results_clustering = []
         list_results_svm = []
+        print('Start methods ML')
         for i in range(len(feat_map)):
+            print(f'clustering {i}')
             clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[i])
             list_results_clustering.append(list([clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db]))
-
+            
+            print(f'linear svm {i}')
             svm_obj = svm_methods()
             svm_obj.create_linear_svm(feat_map[i], feat_map_labels)
             pred = svm_obj.predict_linear_svm(feat_map[i])
             list_results_svm.append(list([svm_obj, pred]))
 
         # save the features extraction objects
+        print('Start saving obj')
+        print('Saving pickle_feat_extraction...')
         utils.save_obj(file_name="pickle_feat_extraction",
                        first=feat_map,
                        second=feat_map_labels,
@@ -159,6 +169,7 @@ if __name__ == "__main__":
                        )
 
     # save all general opbject for reproduce the experiment
+    print('Saving pickle_general...')
     utils.save_obj(file_name="pickle_general",
                    first=allParams,
                    second=net,
@@ -171,8 +182,10 @@ if __name__ == "__main__":
                    ninth=scheduler
                    )
 
-    # save network weights #TODO check save best weights
+    # save network weights #TODO check save best 
+    print('Saving weithts...')
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
                 exist_ok=True
                 )
     torch.save(net.state_dict(), allParams.get_weights_save_path())
+    print('Finish')

@@ -2,6 +2,7 @@ import torch
 from torchvision.models.feature_extraction import get_graph_node_names
 from torchvision.models.feature_extraction import create_feature_extractor
 import numpy as np
+from tqdm import tqdm
 
 
 def extrating_features(model, device, data, return_nodes: list):
@@ -22,7 +23,7 @@ def extrating_features(model, device, data, return_nodes: list):
     feat_ext = create_feature_extractor(model, return_nodes=return_nodes)
     with torch.no_grad():
         i = 0
-        for X, y in data:
+        for X, y in tqdm(data):
             X = X.to(device)
             y = y.to(device)  
             if i == 0:
@@ -34,6 +35,7 @@ def extrating_features(model, device, data, return_nodes: list):
                 all_labels = torch.concat((all_labels, y), dim=0) 
         out = feat_ext(all_data)
     features_map = []
+    print('Finish extracting features')
     for _, layer in enumerate(return_nodes):
         # qui ci sono anche i 3 canali, noi mettiamo tutto insieme
         features_map.append(out[layer].cpu().numpy().reshape(out[layer].shape[0], -1))
