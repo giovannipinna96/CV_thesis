@@ -123,7 +123,7 @@ if __name__ == "__main__":
     # controllas and it is necessary to extract the features
     if allParams.get_is_feature_extraction:
         # extract features
-        feat_map, feat_map_labels = featureExtraction.extrating_features(net,
+        feat_map, feat_map_labels = featureExtraction.extrating_features(net, allParams.get_device(),
                                                                          testloader,
                                                                          ['layer1','layer2','layer3', 'layer4']
                                                                          )  # is a numpy array
