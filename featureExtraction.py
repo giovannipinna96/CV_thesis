@@ -4,7 +4,7 @@ from torchvision.models.feature_extraction import create_feature_extractor
 import numpy as np
 
 
-def extrating_features(model, data, return_nodes: list):
+def extrating_features(model, device, data, return_nodes: list):
     """Function that extract the tensors of the intermediate layers of the network.
     The intermediate layers of the network to be considered for extraction are specified
      in the input parameter return_nodes.
@@ -22,7 +22,9 @@ def extrating_features(model, data, return_nodes: list):
     feat_ext = create_feature_extractor(model, return_nodes=return_nodes)
     with torch.no_grad():
         i = 0
-        for X, y in data:  
+        for X, y in data:
+            X = X.to(device)
+            y = y.to(device)  
             if i == 0:
                 all_data = X
                 all_labels = y
