@@ -36,5 +36,5 @@ def extrating_features(model, device, data, return_nodes: list):
     features_map = []
     for _, layer in enumerate(return_nodes):
         # qui ci sono anche i 3 canali, noi mettiamo tutto insieme
-        features_map.append(out[layer].numpy().reshape(out[layer].shape[0], -1))
+        features_map.append(out[layer].cpu().numpy().reshape(out[layer].shape[0], -1))
     return features_map, all_labels
