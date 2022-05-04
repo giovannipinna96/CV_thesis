@@ -126,7 +126,7 @@ if __name__ == "__main__":
                     )
 
     #feat from normal predict
-    feat_predict, feat_predict_leables = predictNet(net, testloader)
+    feat_predict, feat_predict_leables = predictNet(net, testloader, allParams.get_device())
     # controllas and it is necessary to extract the features
     if allParams.get_is_feature_extraction:
         # extract features
