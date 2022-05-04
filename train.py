@@ -1,9 +1,11 @@
+import imp
 import torch
 import torchvision
 import os
 from torch import Tensor
 from torchvision.utils import make_grid
 import utils
+from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter  # to print to tensorboard
 
 
@@ -59,7 +61,7 @@ def train_epoch(
     writer = SummaryWriter(f'runs/punzoni/tryout_ternsorboard')
     step = 0
     save_values = []
-    for X, y in dataloader:
+    for X, y in tqdm(dataloader):
         if loss_type != 'crossEntropy':
             X = torch.cat([X[0], X[1]], dim=0)
         X = X.to(device)
