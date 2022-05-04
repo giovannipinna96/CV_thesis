@@ -134,10 +134,10 @@ def train_model(
             f"Epoch {epoch+1} --- learning rate {optimizer.param_groups[0]['lr']:.5f}")
 
         lr_scheduler_batch = lr_scheduler if not lr_scheduler_step_on_epoch else None
-        v1, v2 = train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter,
+        v1 = train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter,
                     performance, device, lr_scheduler_batch, loss_type)
         save_values_train.append(v1)
-        save_values_train.append(v2)
+        #save_values_train.append(v2)
 
         print(f"Epoch {epoch+1} completed. Loss - total: {loss_meter.sum:.4f} - average: {loss_meter.avg:.4f}; Performance: {performance_meter.avg:.4f}")
 
