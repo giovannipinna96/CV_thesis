@@ -168,7 +168,7 @@ if __name__ == "__main__":
                    ninth=scheduler
                    )
 
-    # save network weights
+    # save network weights #TODO check save best weights
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
                 exist_ok=True
                 )
