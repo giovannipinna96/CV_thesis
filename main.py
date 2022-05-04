@@ -157,30 +157,34 @@ if __name__ == "__main__":
             svm_obj.create_linear_svm(feat_map[i], feat_map_labels)
             pred = svm_obj.predict_linear_svm(feat_map[i])
             list_results_svm.append(list([svm_obj, pred]))
+        
+        try:
+            # save the features extraction objects
+            print('Start saving obj')
+            print('Saving pickle_feat_extraction...')
+            utils.save_obj(file_name="pickle_feat_extraction",
+                        first=feat_map,
+                        second=feat_map_labels,
+                        third=list_results_clustering,
+                        fourth=list_results_svm
+                        )
 
-        # save the features extraction objects
-        print('Start saving obj')
-        print('Saving pickle_feat_extraction...')
-        utils.save_obj(file_name="pickle_feat_extraction",
-                       first=feat_map,
-                       second=feat_map_labels,
-                       third=list_results_clustering,
-                       fourth=list_results_svm
-                       )
+            # save all general opbject for reproduce the experiment
+            print('Saving pickle_general...')
+            utils.save_obj(file_name="pickle_general",
+                        first=allParams,
+                        second=net,
+                        third=transform_train,
+                        fourth=transform_test,
+                        fifth=trainloader,
+                        sixth=testloader,
+                        seventh=loss_fn,
+                        eighth=optimizer,
+                        ninth=scheduler
+                        )
+        except: 
+            print('Eccezione salvataggio obj')
 
-    # save all general opbject for reproduce the experiment
-    print('Saving pickle_general...')
-    utils.save_obj(file_name="pickle_general",
-                   first=allParams,
-                   second=net,
-                   third=transform_train,
-                   fourth=transform_test,
-                   fifth=trainloader,
-                   sixth=testloader,
-                   seventh=loss_fn,
-                   eighth=optimizer,
-                   ninth=scheduler
-                   )
 
     # save network weights #TODO check save best 
     print('Saving weithts...')
