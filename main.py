@@ -1,4 +1,5 @@
 from re import T
+import argparse
 import torch
 import transformation
 import os
@@ -18,16 +19,22 @@ from predictNet import predictNet
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--epochs", type=int, default=15)
+    parser.add_argument("--root_train", type=str, default="ImageSet/train")
+    parser.add_argument("--root_test", type=str, default="ImageSet/test")
+    parser.add_argument
+    args = parser.parse_args()
     # set all parameters
     allParams = allParameters(
-        root_train="ImageSet/train",
-        root_test="ImageSet/test",
+        root_train=args.root_train,
+        root_test=args.root_test,
         weights_save_path="models/model.pt",
         batch_size_train=32,
         batch_size_test=128,
         model='resnet50',
         pretrained=True,
-        num_epochs=15,
+        num_epochs=args.epochs,
         not_freeze='nothing',
         loss_type='crossEntropy',
         out_net=18,
