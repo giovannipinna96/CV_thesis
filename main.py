@@ -164,6 +164,7 @@ if __name__ == "__main__":
                 exist_ok=True
                 )
     torch.save(net.state_dict(), allParams.get_weights_save_path())
+    
     # controllas and it is necessary to extract the features
     if allParams.get_is_feature_extraction:
         # extract features
