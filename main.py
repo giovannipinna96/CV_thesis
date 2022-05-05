@@ -1,5 +1,6 @@
 from re import T
 import argparse
+from tkinter import Variable
 import torch
 import transformation
 import os
@@ -27,6 +28,7 @@ if __name__ == "__main__":
     parser.add_argument("--out_net", type=int, default=18)
     parser.add_argument("--is_feature_extraction", type=bool, default=True)
     parser.add_argument("--weights_save_path", type=str, default="models/model.pt")
+    parser.add_argument("--is_ml", type=bool, default=True)
     parser.add_argument
     args = parser.parse_args()
     # set all parameters
@@ -42,7 +44,8 @@ if __name__ == "__main__":
         not_freeze='nothing',
         loss_type=args.loss_type,
         out_net=args.out_net,
-        is_feature_extraction=args.is_feature_extraction
+        is_feature_extraction=args.is_feature_extraction,
+        is_ml = args.is_ml
     )
     # transform the dataset
     transform_train = transformation.get_transform_train()
@@ -133,6 +136,34 @@ if __name__ == "__main__":
     #feat from normal predict
     print('Predict Net')
     feat_predict, feat_predict_leables = predictNet(net, testloader, allParams.get_device())
+
+    try:
+        print('Saving pickle_general...')
+        utils.save_obj(file_name="pickle_general",
+                    first=allParams,
+                    second=net,
+                    third=transform_train,
+                    fourth=transform_test,
+                    fifth=trainloader,
+                    sixth=testloader,
+                    seventh=loss_fn,
+                    eighth=optimizer,
+                    ninth=scheduler
+                    )
+        print('Saving pickle_predict Net...')
+        utils.save_obj(file_name="pickle_predict_net",
+                        first=feat_predict,
+                        second=feat_predict_leables
+                        )
+    except: 
+        print('Eccezione salvataggio pickle_cluster_svm')
+
+    # save network weights #TODO check save best 
+    print('Saving weithts...')
+    os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
+                exist_ok=True
+                )
+    torch.save(net.state_dict(), allParams.get_weights_save_path())
     # controllas and it is necessary to extract the features
     if allParams.get_is_feature_extraction:
         # extract features
@@ -141,54 +172,64 @@ if __name__ == "__main__":
                                                                          testloader,
                                                                          ['layer1','layer2','layer3', 'layer4']
                                                                          )  # is a numpy array
-
-        # give to each features a cluster
-        list_results_clustering = []
-        list_results_svm = []
-        print('Start methods ML')
-        for i in range(len(feat_map)):
-            print(f'clustering {i}')
-            clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[i])
-            list_results_clustering.append(list([clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db]))
-            
-            print(f'linear svm {i}')
-            svm_obj = svm_methods()
-            svm_obj.create_linear_svm(feat_map[i], feat_map_labels)
-            pred = svm_obj.predict_linear_svm(feat_map[i])
-            list_results_svm.append(list([svm_obj, pred]))
-        
         try:
-            # save the features extraction objects
-            print('Start saving obj')
             print('Saving pickle_feat_extraction...')
             utils.save_obj(file_name="pickle_feat_extraction",
-                        first=feat_map,
-                        second=feat_map_labels,
-                        third=list_results_clustering,
-                        fourth=list_results_svm
-                        )
-
-            # save all general opbject for reproduce the experiment
-            print('Saving pickle_general...')
-            utils.save_obj(file_name="pickle_general",
-                        first=allParams,
-                        second=net,
-                        third=transform_train,
-                        fourth=transform_test,
-                        fifth=trainloader,
-                        sixth=testloader,
-                        seventh=loss_fn,
-                        eighth=optimizer,
-                        ninth=scheduler
+                            first=feat_map,
+                            second=feat_map_labels
                         )
         except: 
-            print('Eccezione salvataggio obj')
+            print('Eccezione salvataggio pickle_cluster_svm')
+
+        # delete not used any more variables
+        del net
+        del transform_train
+        del transform_test
+        del trainloader
+        del testloader
+        del loss_fn
+        del optimizer
+        del scheduler
+        del feat_predict
+        del feat_predict_leables
 
 
-    # save network weights #TODO check save best 
-    print('Saving weithts...')
-    os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
-                exist_ok=True
-                )
-    torch.save(net.state_dict(), allParams.get_weights_save_path())
+        if allParams.is_ml:
+            # give to each features a cluster
+            list_results_clustering = []
+            list_results_svm = []
+            print('Start methods ML')
+            for i in range(len(feat_map)):
+                print(f'clustering {i}')
+                #clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[i])
+                cluster_obj = clustering_methods()
+                y_km, centers_cluster, all_distances = cluster_obj.kmenas_cluster(feat_map[i])
+                y_fcm_hard, y_fcm_soft, fcm_centers = cluster_obj.fuzzy_cluster(feat_map[i])
+
+                #list_results_clustering.append(list([clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db]))
+                list_results_clustering.append(list([cluster_obj,
+                                                    y_km, centers_cluster,
+                                                    all_distances, y_fcm_hard,
+                                                    y_fcm_soft, fcm_centers
+                                                    ]))
+                
+                print(f'linear svm {i}')
+                svm_obj = svm_methods()
+                svm_obj.create_linear_svm(feat_map[i], feat_map_labels)
+                pred = svm_obj.predict_linear_svm(feat_map[i])
+                list_results_svm.append(list([svm_obj, pred]))
+            
+            try:
+                # save the features extraction objects
+                print('Start saving obj')
+                print('Saving pickle clustering and svm...')
+                utils.save_obj(file_name="pickle_cluster_svm",
+                            first=feat_map,
+                            second=feat_map_labels,
+                            third=list_results_clustering,
+                            fourth=list_results_svm
+                            )
+            except: 
+                print('Eccezione salvataggio pickle_cluster_svm')
+
     print('Finish')
