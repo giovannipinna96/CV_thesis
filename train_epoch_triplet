@@ -1,6 +1,4 @@
 import imp
-
-
 import torch
 
 def train_epoch_triplet(model, dataloader, loss_triplet_fn, optimizer, loss_meter, device, lr_scheduler, optim_step_each_ite=1):
