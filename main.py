@@ -53,22 +53,31 @@ if __name__ == "__main__":
     transform_test = transformation.get_transform_test()
 
     # split the dataset
-    if allParams.get_loss_type() != 'crossEntropy':
+    if allParams.get_loss_type() == 'triplet':
         trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
                                                                     allParams.get_root_test(),
-                                                                    utils.TwoCropTransform(transform_train),
-                                                                    utils.TwoCropTransform(transform_test),
                                                                     allParams.get_batch_size_train(),
-                                                                    allParams.get_batch_size_test()
-                                                                    )
-    else:
+                                                                    allParams.get_batch_size_test(),
+                                                                    transform_train,
+                                                                    transform_test,
+                                                                    lazy=True # ???
+                                                                    )  
+    elif allParams.get_loss_type() == 'crossEntropy':
          trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
                                                                     allParams.get_root_test(),
                                                                     transform_train,
                                                                     transform_test,
                                                                     allParams.get_batch_size_train(),
                                                                     allParams.get_batch_size_test()
-                                                                    )                                                               
+                                                                    )     
+    else:
+        trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
+                                                                    allParams.get_root_test(),
+                                                                    utils.TwoCropTransform(transform_train),
+                                                                    utils.TwoCropTransform(transform_test),
+                                                                    allParams.get_batch_size_train(),
+                                                                    allParams.get_batch_size_test()
+                                                                    )                                                          
     #define the number of different classes
     num_classes = len(trainset.classes)
 
@@ -80,28 +89,22 @@ if __name__ == "__main__":
     # define the loss function and set the last part/layer of the network
     if allParams.get_loss_type() == 'crossEntropy':
         loss_fn = torch.nn.CrossEntropyLoss()
-        if allParams.get_model() == 'vgg16':
-            net.classifier[6] = torch.nn.Linear(in_features=4096,
-                                                out_features=allParams.get_out_net(),
-                                                bias=True
-                                                )
-        else:
-            net.fc = torch.nn.Linear(in_features=2048,
-                                     out_features=allParams.get_out_net(),
-                                     bias=True
-                                     )
+    elif allParams.get_loss_type() == 'triplet':
+        loss_fn = torch.nn.TripletMarginLoss()
     else:
         loss_fn = lossContrastiveLearning(temperature=1.0)
-        if allParams.get_model() == 'vgg16':
-            net.classifier[6] = torch.nn.Linear(in_features=4096,
-                                                out_features=allParams.get_out_net(),
-                                                bias=True
-                                                )
-        else:
-            net.fc = torch.nn.Linear(in_features=2048,
-                                     out_features=allParams.get_out_net(),
-                                     bias=True
-                                     )
+
+    if allParams.get_model() == 'vgg16':
+        net.classifier[6] = torch.nn.Linear(in_features=4096,
+                                            out_features=allParams.get_out_net(),
+                                            bias=True
+                                            )
+    else:
+        net.fc = torch.nn.Linear(in_features=2048,
+                                out_features=allParams.get_out_net(),
+                                bias=True
+                                )
+
     # set optimizer
     if allParams.optimizer.lower() == "sgd":
         optimizer = torch.optim.SGD(net.parameters(),
@@ -113,6 +116,7 @@ if __name__ == "__main__":
         optimizer = torch.optim.RAdam(net.parameters(), lr=.0001)
     else:
         raise NotImplementedError(f"Invalid optimizer {allParams.optimizer}. Please choose from 'sgd' or 'radam'.")
+    
     # set scheduler
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer,
                                                      milestones=[50,75],

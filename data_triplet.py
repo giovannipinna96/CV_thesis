@@ -68,16 +68,16 @@ def get_dataloaders(root_train, root_test, batch_size_train, batch_size_test, tr
     testset = TripletDataset(root_test, transform_test, lazy=lazy, img_dim=img_dim, train=False)
     trainloader = DataLoader(trainset, batch_size_train, shuffle=True, **kwargs)
     testloader = DataLoader(testset, batch_size_test, shuffle=False, **kwargs)
-    return trainloader, testloader
+    return trainloader, testloader, trainset, testset
 
-if __name__ == "__main__":
-    transform_test = T.Compose([
-        T.Resize((256, 256)),
-        To01(),
-        T.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
-    ])
-    dataset = TripletDataset("ImageSet/AllData", transform_test, lazy=False)
-    # a,b,c,d = dataset[0]
-    dataloader = torch.utils.data.DataLoader(dataset, 128, shuffle=False, num_workers=0)
-    dl = next(iter(dataloader))
-    dataset
+# if __name__ == "__main__":
+#     transform_test = T.Compose([
+#         T.Resize((256, 256)),
+#         To01(),
+#         T.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+#     ])
+#     dataset = TripletDataset("ImageSet/AllData", transform_test, lazy=False)
+#     # a,b,c,d = dataset[0]
+#     dataloader = torch.utils.data.DataLoader(dataset, 128, shuffle=False, num_workers=0)
+#     dl = next(iter(dataloader))
+#     dataset
