@@ -25,6 +25,7 @@ if __name__ == "__main__":
     parser.add_argument("--root_train", type=str, default="ImageSet/train")
     parser.add_argument("--root_test", type=str, default="ImageSet/test")
     parser.add_argument("--loss_type", type=str, default="crossEntropy")
+    parser.add_argument("--optimizer", type=str, default="sgd")
     parser.add_argument("--out_net", type=int, default=18)
     parser.add_argument("--is_feature_extraction", type=bool, default=True)
     parser.add_argument("--weights_save_path", type=str, default="models/model.pt")
@@ -90,7 +91,7 @@ if __name__ == "__main__":
                                      bias=True
                                      )
     else:
-        loss_fn = lossContrastiveLearning(temperature=0.07)
+        loss_fn = lossContrastiveLearning(temperature=1.0)
         if allParams.get_model() == 'vgg16':
             net.classifier[6] = torch.nn.Linear(in_features=4096,
                                                 out_features=allParams.get_out_net(),
@@ -102,11 +103,16 @@ if __name__ == "__main__":
                                      bias=True
                                      )
     # set optimizer
-    optimizer = torch.optim.SGD(net.parameters(),
-                                lr=.01,
-                                momentum=.9,
-                                weight_decay=5e-4
-                                )
+    if allParams.optimizer.lower() == "sgd":
+        optimizer = torch.optim.SGD(net.parameters(),
+                                    lr=.01,
+                                    momentum=.9,
+                                    weight_decay=5e-4
+                                    )
+    elif allParams.optimizer.lower() == "radam":
+        optimizer = torch.optim.RAdam(net.parameters(), lr=.0001)
+    else:
+        raise NotImplementedError(f"Invalid optimizer {allParams.optimizer}. Please choose from 'sgd' or 'radam'.")
     # set scheduler
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer,
                                                      milestones=[50,75],
