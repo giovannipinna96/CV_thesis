@@ -17,6 +17,7 @@ from clustering import all_clustering, clustering_methods
 import numpy as np
 from svm import svm_methods
 from predictNet import predictNet
+import data_triplet
 
 
 if __name__ == "__main__":
@@ -24,7 +25,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=15)
     parser.add_argument("--root_train", type=str, default="ImageSet/train")
     parser.add_argument("--root_test", type=str, default="ImageSet/test")
-    parser.add_argument("--loss_type", type=str, default="crossEntropy")
+    parser.add_argument("--loss_type", type=str, default="triplet")
     parser.add_argument("--optimizer", type=str, default="sgd")
     parser.add_argument("--out_net", type=int, default=18)
     parser.add_argument("--is_feature_extraction", type=bool, default=True)
@@ -54,7 +55,7 @@ if __name__ == "__main__":
 
     # split the dataset
     if allParams.get_loss_type() == 'triplet':
-        trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
+        trainloader, testloader, trainset, testset = data_triplet.get_dataloaders(allParams.get_root_train(),
                                                                     allParams.get_root_test(),
                                                                     allParams.get_batch_size_train(),
                                                                     allParams.get_batch_size_test(),

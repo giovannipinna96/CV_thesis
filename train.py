@@ -53,7 +53,7 @@ class AverageMeter(object):
 
 
 def train_epoch_triplet(model, dataloader, loss_triplet_fn, optimizer, loss_meter, device, lr_scheduler, optim_step_each_ite=1):
-    for i, (X_anchor, X_pos, X_neg, y) in enumerate(dataloader):
+    for i, (X_anchor, X_pos, X_neg, y) in enumerate(dataloader): #TODO inserire tqdm
         X_anchor = X_anchor.to(device)
         X_anchor_dim = X_anchor.size(0)
         y = y.to(device)
@@ -168,12 +168,13 @@ def train_model(
             f"Epoch {epoch+1} --- learning rate {optimizer.param_groups[0]['lr']:.5f}")
 
         lr_scheduler_batch = lr_scheduler if not lr_scheduler_step_on_epoch else None
-        if type(loss_fn) != torch.nn.CrossEntropyLoss():
+        if type(loss_fn) == torch.nn.modules.loss.TripletMarginLoss:
+             train_epoch_triplet(model, dataloader, loss_fn, optimizer, loss_meter, device, lr_scheduler_batch, optim_step_each_ite=1)
+        
+        else:
             v = train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter,
                         performance, device, lr_scheduler_batch, loss_type)
-        else:
-            train_epoch_triplet(model, dataloader, loss_fn, optimizer, loss_meter, device, lr_scheduler_batch, optim_step_each_ite=1)
-        
+           
         save_values_train.append(v)
         #save_values_train.append(v2)
 
