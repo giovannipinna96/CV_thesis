@@ -6,6 +6,7 @@ from torchvision.utils import make_grid
 import utils
 import train
 from train import AverageMeter
+from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter  # to print to tensorboard
 
 
@@ -27,7 +28,7 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
     model.eval()
     save_values_test = []
     with torch.no_grad():
-        for X, y in dataloader:
+        for X, y in tqdm(dataloader):
             if loss_type != 'crossEntropy':
                 X = torch.cat([X[0], X[1]], dim=0)
             X = X.to(device)
@@ -40,7 +41,7 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
                 f1, f2 = torch.split(y_hat, [bsz,bsz], dim=0)
                 y_hat = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
             loss = loss_fn(y_hat, y) if loss_fn is not None else None
-            if loss_type == 'crossEntropy':
+            if loss_type != 'crossEntropy':
                 acc = performance(y_hat, y.unsqueeze(-1))
             else:
                 acc = performance(y_hat, y)
