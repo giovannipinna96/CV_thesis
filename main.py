@@ -125,18 +125,28 @@ if __name__ == "__main__":
                                                      )
 
     # train
-    print('Start Train')
-    train.train_model(net,
-                      trainloader,
-                      loss_fn,
-                      optimizer,
-                      allParams.get_num_epochs(),
-                      lr_scheduler=scheduler,
-                      device=allParams.get_device(),
-                      loss_type=allParams.get_loss_type()
-                      )
+    # print('Start Train')
+    # train.train_model(net,
+    #                   trainloader,
+    #                   loss_fn,
+    #                   optimizer,
+    #                   allParams.get_num_epochs(),
+    #                   lr_scheduler=scheduler,
+    #                   device=allParams.get_device(),
+    #                   loss_type=allParams.get_loss_type()
+    #                   )
     # test
     print('Start Test')
+    if allParams.get_loss_type() == 'triplet':
+        loss_fn = torch.nn.CrossEntropyLoss()
+    # if allParams.get_loss_type() == 'triplet':
+    #     test.test_model_triplet(net,
+    #                     testloader,
+    #                     loss_triplet_fn=loss_fn,
+    #                     device=allParams.get_device(),
+    #                     loss_type=allParams.get_loss_type()
+    #                     )
+    #else:
     test.test_model(net,
                     testloader,
                     loss_fn=loss_fn,
@@ -182,8 +192,8 @@ if __name__ == "__main__":
         print('Extracting features ...')
         feat_map, feat_map_labels = featureExtraction.extrating_features(net, allParams.get_device(),
                                                                          testloader,
-                                                                         ['layer3', 'layer4']
-                                                                         )  # is a numpy array ['layer1','layer2',]
+                                                                         ['layer1','layer2','layer3', 'layer4']
+                                                                         )  # is a numpy array
         try:
             print('Saving pickle_feat_extraction...')
             utils.save_obj(file_name="pickle_feat_extraction",
