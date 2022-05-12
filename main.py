@@ -25,7 +25,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=15)
     parser.add_argument("--root_train", type=str, default="ImageSet/train")
     parser.add_argument("--root_test", type=str, default="ImageSet/test")
-    parser.add_argument("--loss_type", type=str, default="triplet")
+    parser.add_argument("--loss_type", type=str, default="crossEntropy")
     parser.add_argument("--optimizer", type=str, default="sgd")
     parser.add_argument("--out_net", type=int, default=18)
     parser.add_argument("--is_feature_extraction", type=bool, default=True)
@@ -125,16 +125,16 @@ if __name__ == "__main__":
                                                      )
 
     # train
-    # print('Start Train')
-    # train.train_model(net,
-    #                   trainloader,
-    #                   loss_fn,
-    #                   optimizer,
-    #                   allParams.get_num_epochs(),
-    #                   lr_scheduler=scheduler,
-    #                   device=allParams.get_device(),
-    #                   loss_type=allParams.get_loss_type()
-    #                   )
+    print('Start Train')
+    train.train_model(net,
+                      trainloader,
+                      loss_fn,
+                      optimizer,
+                      allParams.get_num_epochs(),
+                      lr_scheduler=scheduler,
+                      device=allParams.get_device(),
+                      loss_type=allParams.get_loss_type()
+                      )
     # test
     print('Start Test')
     if allParams.get_loss_type() == 'triplet':
