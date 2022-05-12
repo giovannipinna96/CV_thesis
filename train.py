@@ -52,7 +52,11 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-def train_epoch_triplet(model, dataloader, loss_triplet_fn, optimizer, loss_meter, device, lr_scheduler, optim_step_each_ite=1):
+def train_epoch_triplet(model, dataloader, loss_triplet_fn, optimizer, loss_meter,
+                        device, lr_scheduler, performance_meter, performance,  optim_step_each_ite=1):
+    writer = SummaryWriter(f'runs/punzoni/tryout_ternsorboard')
+    step = 0
+    save_values = []
     for i, (X_anchor, X_pos, X_neg, y) in tqdm(enumerate(dataloader)):
         X_anchor = X_anchor.to(device)
         X_anchor_dim = X_anchor.size(0)
@@ -78,11 +82,30 @@ def train_epoch_triplet(model, dataloader, loss_triplet_fn, optimizer, loss_mete
             if lr_scheduler is not None:
                 lr_scheduler.step()
         # 6. calculate the accuracy for this mini-batch
-        #acc = performance(y_hat, y)
+        acc = performance(y_hat[:X_anchor_dim], y)
         # valutare se aggiungere qualcosa qui, potrebbe non aver senso calcolare l'accuracy in fase di train
         # 7. update the loss and accuracy AverageMeter
         loss_meter.update(val=loss.item(), n=X.shape[0])
+        performance_meter.update(val=acc, n=X.shape[0])
         # performance_meter.update(val=acc, n=X.shape[0])
+        # stuff for tensorboard support
+        img_grid = torchvision.utils.make_grid(X)
+        #features = X.reshape(X.shape[0], -1)
+        writer.add_scalar('Training loss', loss_meter.avg, global_step=step)
+        writer.add_scalar('Training accuracy',
+                          performance_meter.avg, global_step=step)
+        writer.add_image('Image', img_grid)
+        #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
+        # save loss and accurancy
+        save_values.append(loss_meter.avg)
+        save_values.append(performance_meter.avg)
+
+        print(f" for batch {i} we have loss avg = {loss_meter.avg}")
+        print(f"for batch {i} we have performancemeter avg {performance_meter.avg}")
+
+        step += 1
+    
+    return save_values
 
 # note: I've added a generic performance to replace accuracy
 def train_epoch(
@@ -169,7 +192,8 @@ def train_model(
 
         lr_scheduler_batch = lr_scheduler if not lr_scheduler_step_on_epoch else None
         if type(loss_fn) == torch.nn.modules.loss.TripletMarginLoss:
-             train_epoch_triplet(model, dataloader, loss_fn, optimizer, loss_meter, device, lr_scheduler_batch, optim_step_each_ite=1)
+            v = train_epoch_triplet(model, dataloader, loss_fn, optimizer, loss_meter, device, lr_scheduler_batch, performance_meter,
+              performance, optim_step_each_ite=1)
         
         else:
             v = train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter,
