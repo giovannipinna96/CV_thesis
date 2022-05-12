@@ -53,7 +53,7 @@ class AverageMeter(object):
 
 
 def train_epoch_triplet(model, dataloader, loss_triplet_fn, optimizer, loss_meter, device, lr_scheduler, optim_step_each_ite=1):
-    for i, (X_anchor, X_pos, X_neg, y) in enumerate(dataloader): #TODO inserire tqdm
+    for i, (X_anchor, X_pos, X_neg, y) in tqdm(enumerate(dataloader)):
         X_anchor = X_anchor.to(device)
         X_anchor_dim = X_anchor.size(0)
         y = y.to(device)
