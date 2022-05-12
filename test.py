@@ -40,7 +40,7 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
                 f1, f2 = torch.split(y_hat, [bsz,bsz], dim=0)
                 y_hat = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
             loss = loss_fn(y_hat, y) if loss_fn is not None else None
-            if loss_type != 'crossEntropy':
+            if loss_type == 'crossEntropy':
                 acc = performance(y_hat, y.unsqueeze(-1))
             else:
                 acc = performance(y_hat, y)
