@@ -23,7 +23,7 @@ class clustering_methods():
         self.sc_db = None
 
 
-    def kmenas_cluster(self, X, n_clusters : int =16, must_save : bool =True):
+    def kmenas_cluster(self, X, n_clusters : int =17, must_save : bool =True):
         """This function performs kmeans clustering.
         Before clustering, budget the data with the scale_features function
         which in turn calls the sklearn StandardScale () function
@@ -65,7 +65,7 @@ class clustering_methods():
             return y_predicted
         else: print("not find any k-means model in the object")
 
-    def fuzzy_cluster(self, X, n_clusters : int =16, must_save : bool =True):
+    def fuzzy_cluster(self, X, n_clusters : int =17, must_save : bool =True):
         """This function performs fuzzy-c-means clustering.
         Before clustering, budget the data with the scale_features function
         which in turn calls the sklearn StandardScale () function

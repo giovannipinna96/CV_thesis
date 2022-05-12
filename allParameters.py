@@ -11,7 +11,7 @@ class allParameters():
                  root_test="ImageSet/test", weights_save_path="models/model.pt", batch_size_train=32,
                  batch_size_test=128, model='resnet50',
                  pretrained=True, num_epochs=15, not_freeze='nothing', loss_type='crossEntropy',
-                 out_net=18, is_feature_extraction=True
+                 out_net=18, is_feature_extraction=True, is_ml = True, optimizer="sgd"
                  ):
         self.root_train = root_train
         self.root_test = root_test
@@ -26,6 +26,8 @@ class allParameters():
         self.loss_type = loss_type
         self.out_net = out_net
         self.is_feature_extraction = is_feature_extraction
+        self.is_ml = is_ml
+        self.optimizer = optimizer
 
     def get_out_net(self):
         return self.out_net
@@ -84,6 +86,12 @@ class allParameters():
 
     def get_pretrained(self):
         return self.pretrained
+
+    def get_is_ml(self):
+        return self.is_ml
+
+    def set_is_ml(self, is_ml : bool):
+        self.is_ml = is_ml
 
     def set_pretrained(self, pretrained: bool):
         """Function to set the pretrained value.

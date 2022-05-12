@@ -1,9 +1,11 @@
+import imp
 import torch
 import torchvision
 import os
 from torch import Tensor
 from torchvision.utils import make_grid
 import utils
+from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter  # to print to tensorboard
 
 
@@ -50,6 +52,61 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
+def train_epoch_triplet(model, dataloader, loss_triplet_fn, optimizer, loss_meter,
+                        device, lr_scheduler, performance_meter, performance,  optim_step_each_ite=1):
+    writer = SummaryWriter(f'runs/punzoni/tryout_ternsorboard')
+    step = 0
+    save_values = []
+    for i, (X_anchor, X_pos, X_neg, y) in tqdm(enumerate(dataloader)):
+        X_anchor = X_anchor.to(device)
+        X_anchor_dim = X_anchor.size(0)
+        y = y.to(device)
+        X_pos = X_pos.to(device)
+        X_neg = X_neg.to(device)
+        X = torch.cat((X_anchor, X_pos, X_neg))
+        # 1. reset the gradients previously accumulated by the optimizer
+        #    this will avoid re-using gradients from previous loops
+        optim_step_this_ite = ((i+1) % optim_step_each_ite) == 0
+        if optim_step_this_ite:
+            optimizer.zero_grad() 
+        # 2. get the predictions from the current state of the model
+        #    this is the forward pass
+        y_hat = model(X)
+        # 3. calculate the loss on the current mini-batch
+        loss = loss_triplet_fn(y_hat[:X_anchor_dim], y_hat[X_anchor_dim:X_anchor_dim*2], y_hat[X_anchor_dim*2:])
+        # 4. execute the backward pass given the current loss
+        loss.backward()
+        # 5. update the value of the params
+        if optim_step_this_ite:
+            optimizer.step()
+            if lr_scheduler is not None:
+                lr_scheduler.step()
+        # 6. calculate the accuracy for this mini-batch
+        acc = performance(y_hat[:X_anchor_dim], y)
+        # valutare se aggiungere qualcosa qui, potrebbe non aver senso calcolare l'accuracy in fase di train
+        # 7. update the loss and accuracy AverageMeter
+        loss_meter.update(val=loss.item(), n=X.shape[0])
+        performance_meter.update(val=acc, n=X.shape[0])
+        # performance_meter.update(val=acc, n=X.shape[0])
+        # stuff for tensorboard support
+        img_grid = torchvision.utils.make_grid(X)
+        #features = X.reshape(X.shape[0], -1)
+        writer.add_scalar('Training loss', loss_meter.avg, global_step=step)
+        writer.add_scalar('Training accuracy',
+                          performance_meter.avg, global_step=step)
+        writer.add_image('Image', img_grid)
+        #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
+        # save loss and accurancy
+        save_values.append(loss_meter.avg)
+        save_values.append(performance_meter.avg)
+
+        print(f" for batch {i} we have loss avg = {loss_meter.avg}")
+        print(f"for batch {i} we have performancemeter avg {performance_meter.avg}")
+
+        step += 1
+    
+    return save_values
+
 # note: I've added a generic performance to replace accuracy
 def train_epoch(
     model, dataloader, loss_fn, optimizer, loss_meter, performance_meter, performance, device,
@@ -59,7 +116,7 @@ def train_epoch(
     writer = SummaryWriter(f'runs/punzoni/tryout_ternsorboard')
     step = 0
     save_values = []
-    for X, y in dataloader:
+    for X, y in tqdm(dataloader):
         if loss_type != 'crossEntropy':
             X = torch.cat([X[0], X[1]], dim=0)
         X = X.to(device)
@@ -134,8 +191,14 @@ def train_model(
             f"Epoch {epoch+1} --- learning rate {optimizer.param_groups[0]['lr']:.5f}")
 
         lr_scheduler_batch = lr_scheduler if not lr_scheduler_step_on_epoch else None
-        v = train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter,
-                    performance, device, lr_scheduler_batch, loss_type)
+        if type(loss_fn) == torch.nn.modules.loss.TripletMarginLoss:
+            v = train_epoch_triplet(model, dataloader, loss_fn, optimizer, loss_meter, device, lr_scheduler_batch, performance_meter,
+              performance, optim_step_each_ite=1)
+        
+        else:
+            v = train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter,
+                        performance, device, lr_scheduler_batch, loss_type)
+           
         save_values_train.append(v)
         #save_values_train.append(v2)
 

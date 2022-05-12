@@ -35,7 +35,7 @@ class svm_methods():
     def create_not_linear_svm(self, X, y):
         self.not_linear_svm = None
         X_std, _ = scale_features(X)
-        clf = NuSVC(gamma='auto')
+        clf = NuSVC(gamma='auto', nu=0.01)
         clf.fit(X_std, y)
         self.not_linear_svm = clf
 

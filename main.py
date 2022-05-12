@@ -1,4 +1,6 @@
 from re import T
+import argparse
+from tkinter import Variable
 import torch
 import transformation
 import os
@@ -15,45 +17,68 @@ from clustering import all_clustering, clustering_methods
 import numpy as np
 from svm import svm_methods
 from predictNet import predictNet
+import data_triplet
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--epochs", type=int, default=15)
+    parser.add_argument("--root_train", type=str, default="ImageSet/train")
+    parser.add_argument("--root_test", type=str, default="ImageSet/test")
+    parser.add_argument("--loss_type", type=str, default="triplet")
+    parser.add_argument("--optimizer", type=str, default="sgd")
+    parser.add_argument("--out_net", type=int, default=18)
+    parser.add_argument("--is_feature_extraction", type=bool, default=True)
+    parser.add_argument("--weights_save_path", type=str, default="models/model.pt")
+    parser.add_argument("--is_ml", type=bool, default=True)
+    parser.add_argument
+    args = parser.parse_args()
     # set all parameters
     allParams = allParameters(
-        root_train="ImageSet/train",
-        root_test="ImageSet/test",
-        weights_save_path="models/model.pt",
+        root_train=args.root_train,
+        root_test=args.root_test,
+        weights_save_path=args.weights_save_path,
         batch_size_train=32,
         batch_size_test=128,
         model='resnet50',
         pretrained=True,
-        num_epochs=15,
+        num_epochs=args.epochs,
         not_freeze='nothing',
-        loss_type='crossEntropy',
-        out_net=18,
-        is_feature_extraction=True
+        loss_type=args.loss_type,
+        out_net=args.out_net,
+        is_feature_extraction=args.is_feature_extraction,
+        is_ml = args.is_ml
     )
     # transform the dataset
     transform_train = transformation.get_transform_train()
     transform_test = transformation.get_transform_test()
 
     # split the dataset
-    if allParams.get_loss_type() != 'crossEntropy':
-        trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
+    if allParams.get_loss_type() == 'triplet':
+        trainloader, testloader, trainset, testset = data_triplet.get_dataloaders(allParams.get_root_train(),
                                                                     allParams.get_root_test(),
-                                                                    utils.TwoCropTransform(transform_train),
-                                                                    utils.TwoCropTransform(transform_test),
                                                                     allParams.get_batch_size_train(),
-                                                                    allParams.get_batch_size_test()
-                                                                    )
-    else:
+                                                                    allParams.get_batch_size_test(),
+                                                                    transform_train,
+                                                                    transform_test,
+                                                                    lazy=True # ???
+                                                                    )  
+    elif allParams.get_loss_type() == 'crossEntropy':
          trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
                                                                     allParams.get_root_test(),
                                                                     transform_train,
                                                                     transform_test,
                                                                     allParams.get_batch_size_train(),
                                                                     allParams.get_batch_size_test()
-                                                                    )                                                               
+                                                                    )     
+    else:
+        trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
+                                                                    allParams.get_root_test(),
+                                                                    utils.TwoCropTransform(transform_train),
+                                                                    utils.TwoCropTransform(transform_test),
+                                                                    allParams.get_batch_size_train(),
+                                                                    allParams.get_batch_size_test()
+                                                                    )                                                          
     #define the number of different classes
     num_classes = len(trainset.classes)
 
@@ -65,42 +90,42 @@ if __name__ == "__main__":
     # define the loss function and set the last part/layer of the network
     if allParams.get_loss_type() == 'crossEntropy':
         loss_fn = torch.nn.CrossEntropyLoss()
-        if allParams.get_model() == 'vgg16':
-            net.classifier[6] = torch.nn.Linear(in_features=4096,
-                                                out_features=allParams.get_out_net(),
-                                                bias=True
-                                                )
-        else:
-            net.fc = torch.nn.Linear(in_features=2048,
-                                     out_features=allParams.get_out_net(),
-                                     bias=True
-                                     )
+    elif allParams.get_loss_type() == 'triplet':
+        loss_fn = torch.nn.TripletMarginLoss()
     else:
-        loss_fn = lossContrastiveLearning(temperature=0.07)
-        if allParams.get_model() == 'vgg16':
-            net.classifier[6] = torch.nn.Linear(in_features=4096,
-                                                out_features=allParams.get_out_net(),
-                                                bias=True
-                                                )
-        else:
-            net.fc = torch.nn.Linear(in_features=2048,
-                                     out_features=allParams.get_out_net(),
-                                     bias=True
-                                     )
-    # set optimizer
-    optimizer = torch.optim.SGD(net.parameters(),
-                                lr=.01,
-                                momentum=.9,
-                                weight_decay=5e-4
+        loss_fn = lossContrastiveLearning(temperature=1.0)
+
+    if allParams.get_model() == 'vgg16':
+        net.classifier[6] = torch.nn.Linear(in_features=4096,
+                                            out_features=allParams.get_out_net(),
+                                            bias=True
+                                            )
+    else:
+        net.fc = torch.nn.Linear(in_features=2048,
+                                out_features=allParams.get_out_net(),
+                                bias=True
                                 )
+
+    # set optimizer
+    if allParams.optimizer.lower() == "sgd":
+        optimizer = torch.optim.SGD(net.parameters(),
+                                    lr=.01,
+                                    momentum=.9,
+                                    weight_decay=5e-4
+                                    )
+    elif allParams.optimizer.lower() == "radam":
+        optimizer = torch.optim.RAdam(net.parameters(), lr=.0001)
+    else:
+        raise NotImplementedError(f"Invalid optimizer {allParams.optimizer}. Please choose from 'sgd' or 'radam'.")
+    
     # set scheduler
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer,
-                                                     milestones=list(
-                                                         range(allParams.get_num_epochs()))[5::2],
-                                                     gamma=0.25
+                                                     milestones=[50,75],
+                                                     gamma=0.1
                                                      )
 
     # train
+    print('Start Train')
     train.train_model(net,
                       trainloader,
                       loss_fn,
@@ -111,6 +136,7 @@ if __name__ == "__main__":
                       loss_type=allParams.get_loss_type()
                       )
     # test
+    print('Start Test')
     test.test_model(net,
                     testloader,
                     loss_fn=loss_fn,
@@ -119,50 +145,103 @@ if __name__ == "__main__":
                     )
 
     #feat from normal predict
+    print('Predict Net')
     feat_predict, feat_predict_leables = predictNet(net, testloader, allParams.get_device())
-    # controllas and it is necessary to extract the features
-    if allParams.get_is_feature_extraction:
-        # extract features
-        feat_map, feat_map_labels = featureExtraction.extrating_features(net, allParams.get_device(),
-                                                                         testloader,
-                                                                         ['layer1','layer2','layer3', 'layer4']
-                                                                         )  # is a numpy array
 
-        # give to each features a cluster
-        list_results_clustering = []
-        list_results_svm = []
-        for i in range(len(feat_map)):
-            clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[i])
-            list_results_clustering.append(list([clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db]))
+    try:
+        print('Saving pickle_general...')
+        utils.save_obj(file_name="pickle_general",
+                    first=allParams,
+                    second=net,
+                    third=transform_train,
+                    fourth=transform_test,
+                    fifth=trainloader,
+                    sixth=testloader,
+                    seventh=loss_fn,
+                    eighth=optimizer,
+                    ninth=scheduler
+                    )
+        print('Saving pickle_predict Net...')
+        utils.save_obj(file_name="pickle_predict_net",
+                        first=feat_predict,
+                        second=feat_predict_leables
+                        )
+    except: 
+        print('Eccezione salvataggio pickle_cluster_svm')
 
-            svm_obj = svm_methods()
-            svm_obj.create_linear_svm(feat_map[i], feat_map_labels)
-            pred = svm_obj.predict_linear_svm(feat_map[i])
-            list_results_svm.append(list([svm_obj, pred]))
-
-        # save the features extraction objects
-        utils.save_obj(file_name="pickle_feat_extraction",
-                       first=feat_map,
-                       second=feat_map_labels,
-                       third=list_results_clustering,
-                       fourth=list_results_svm
-                       )
-
-    # save all general opbject for reproduce the experiment
-    utils.save_obj(file_name="pickle_general",
-                   first=allParams,
-                   second=net,
-                   third=transform_train,
-                   fourth=transform_test,
-                   fifth=trainloader,
-                   sixth=testloader,
-                   seventh=loss_fn,
-                   eighth=optimizer,
-                   ninth=scheduler
-                   )
-
-    # save network weights #TODO check save best weights
+    # save network weights #TODO check save best 
+    print('Saving weithts...')
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
                 exist_ok=True
                 )
     torch.save(net.state_dict(), allParams.get_weights_save_path())
+    
+    # controllas and it is necessary to extract the features
+    if allParams.get_is_feature_extraction:
+        # extract features
+        print('Extracting features ...')
+        feat_map, feat_map_labels = featureExtraction.extrating_features(net, allParams.get_device(),
+                                                                         testloader,
+                                                                         ['layer3', 'layer4']
+                                                                         )  # is a numpy array ['layer1','layer2',]
+        try:
+            print('Saving pickle_feat_extraction...')
+            utils.save_obj(file_name="pickle_feat_extraction",
+                            first=feat_map,
+                            second=feat_map_labels
+                        )
+        except: 
+            print('Eccezione salvataggio pickle_cluster_svm')
+
+        # delete not used any more variables
+        del net
+        del transform_train
+        del transform_test
+        del trainloader
+        del testloader
+        del loss_fn
+        del optimizer
+        del scheduler
+        del feat_predict
+        del feat_predict_leables
+
+
+        if allParams.is_ml:
+            # give to each features a cluster
+            list_results_clustering = []
+            list_results_svm = []
+            print('Start methods ML')
+            for i in range(len(feat_map)):
+                print(f'clustering {i}')
+                #clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db = all_clustering(feat_map[i])
+                cluster_obj = clustering_methods()
+                y_km, centers_cluster, all_distances = cluster_obj.kmenas_cluster(feat_map[i])
+                y_fcm_hard, y_fcm_soft, fcm_centers = cluster_obj.fuzzy_cluster(feat_map[i])
+
+                #list_results_clustering.append(list([clusters_obj, y_km, y_fcm_hard, y_fcm_soft, y_ac, y_db]))
+                list_results_clustering.append(list([cluster_obj,
+                                                    y_km, centers_cluster,
+                                                    all_distances, y_fcm_hard,
+                                                    y_fcm_soft, fcm_centers
+                                                    ]))
+                
+                print(f'linear svm {i}')
+                svm_obj = svm_methods()
+                svm_obj.create_linear_svm(feat_map[i], feat_map_labels)
+                pred = svm_obj.predict_linear_svm(feat_map[i])
+                list_results_svm.append(list([svm_obj, pred]))
+            
+            try:
+                # save the features extraction objects
+                print('Start saving obj')
+                print('Saving pickle clustering and svm...')
+                utils.save_obj(file_name="pickle_cluster_svm",
+                            first=feat_map,
+                            second=feat_map_labels,
+                            third=list_results_clustering,
+                            fourth=list_results_svm
+                            )
+            except: 
+                print('Eccezione salvataggio pickle_cluster_svm')
+
+    print('Finish')
