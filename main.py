@@ -137,8 +137,8 @@ if __name__ == "__main__":
                       )
     # test
     print('Start Test')
-    if allParams.get_loss_type() == 'triplet':
-        loss_fn = torch.nn.CrossEntropyLoss()
+    if allParams.get_loss_type() != 'triplet':
+    #    loss_fn = torch.nn.CrossEntropyLoss()
     # if allParams.get_loss_type() == 'triplet':
     #     test.test_model_triplet(net,
     #                     testloader,
@@ -147,12 +147,12 @@ if __name__ == "__main__":
     #                     loss_type=allParams.get_loss_type()
     #                     )
     #else:
-    test.test_model(net,
-                    testloader,
-                    loss_fn=loss_fn,
-                    device=allParams.get_device(),
-                    loss_type=allParams.get_loss_type()
-                    )
+        test.test_model(net,
+                        testloader,
+                        loss_fn=loss_fn,
+                        device=allParams.get_device(),
+                        loss_type=allParams.get_loss_type()
+                        )
 
     #feat from normal predict
     print('Predict Net')
