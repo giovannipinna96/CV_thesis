@@ -136,8 +136,8 @@ if __name__ == "__main__":
                       loss_type=allParams.get_loss_type()
                       )
     # test
-    print('Start Test')
     if allParams.get_loss_type() != 'triplet':
+        print('Start Test')
     #    loss_fn = torch.nn.CrossEntropyLoss()
     # if allParams.get_loss_type() == 'triplet':
     #     test.test_model_triplet(net,
