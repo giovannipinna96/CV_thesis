@@ -49,7 +49,8 @@ if __name__ == "__main__":
         loss_type=args.loss_type,
         out_net=args.out_net,
         is_feature_extraction=args.is_feature_extraction,
-        is_ml = args.is_ml
+        is_ml = args.is_ml,
+        optimizer=args.optimizer
     )
     # transform the dataset
     transform_train = transformation.get_transform_train()
