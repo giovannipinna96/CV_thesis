@@ -8,7 +8,8 @@ sys.path.insert(0, os.path.abspath("./simple-dnn"))
 
 import numpy as np
 import tensorflow as tf
-import tensorflow.contrib.slim as slim
+# import tensorflow.contrib.slim as slim
+import tf_slim as slim  # i insert this library
 import scipy
 import time
 
@@ -150,15 +151,15 @@ class OpenNetBase(object):
         """
         pass
 
-    # def decoder(self, z, reuse=False):
-    #     """ Decoder Network. Experimental!
-    #     Args:
-    #         :param z - latent variables z.
-    #         :param reuse - whether to reuse old network on create new one.
-    #     Returns:
-    #         The reconstructed x
-    #     """
-    #     pass
+    def decoder(self, z, reuse=False):
+        """ Decoder Network. Experimental!
+        Args:
+            :param z - latent variables z.
+            :param reuse - whether to reuse old network on create new one.
+        Returns:
+            The reconstructed x
+        """
+        pass
 
     def bucket_mean(self, data, bucket_ids, num_buckets):
         total = tf.unsorted_segment_sum(data, bucket_ids, num_buckets)
@@ -243,10 +244,10 @@ class OpenNetBase(object):
         intra_class_sq_diff = dist[1]
         return intra_class_sq_diff, inter_class_sq_diff
 
-    # def build_model(self):
-    #     """ Builds the network graph.
-    #     """
-    #     pass
+    def build_model(self):
+        """ Builds the network graph.
+        """
+        pass
 
     def loss_fn_training_op(self, x, y, z, logits, x_recon, class_means):
         """ Computes the loss functions and creates the update ops.
@@ -258,35 +259,36 @@ class OpenNetBase(object):
         :class_means - the class means.
         """
         # Calculate intra class and inter class distance
-        # if self.dist == 'class_mean':   # For experimental pupose only
-        #     self.intra_c_loss, self.inter_c_loss = self.inter_intra_diff(
-        #         z, tf.cast(y, tf.int32), class_means)
-        # elif self.dist == 'all_pair':   # For experimental pupose only
-        #     self.intra_c_loss, self.inter_c_loss = self.all_pair_inter_intra_diff(
-        #         z, tf.cast(y, tf.int32))
-        # elif self.dist == 'mean_separation_spread':  # ii-loss
-        self.intra_c_loss, self.inter_c_loss = self.inter_separation_intra_spred(z, tf.cast(y, tf.int32), class_means)
-        # elif self.dist == 'min_max':   # For experimental pupose only
-        #     self.intra_c_loss, self.inter_c_loss = self.inter_min_intra_max(
-        #         z, tf.cast(y, tf.int32), class_means)
+        if self.dist == 'class_mean':  # For experimental pupose only
+            self.intra_c_loss, self.inter_c_loss = self.inter_intra_diff(
+                z, tf.cast(y, tf.int32), class_means)
+        elif self.dist == 'all_pair':  # For experimental pupose only
+            self.intra_c_loss, self.inter_c_loss = self.all_pair_inter_intra_diff(
+                z, tf.cast(y, tf.int32))
+        elif self.dist == 'mean_separation_spread':  # ii-loss
+            self.intra_c_loss, self.inter_c_loss = self.inter_separation_intra_spred(z, tf.cast(y, tf.int32),
+                                                                                     class_means)
+        elif self.dist == 'min_max':  # For experimental pupose only
+            self.intra_c_loss, self.inter_c_loss = self.inter_min_intra_max(
+                z, tf.cast(y, tf.int32), class_means)
 
         # Calculate reconstruction loss
-        # if self.enable_recon_loss:    # For experimental pupose only
-        #     self.recon_loss = tf.reduce_mean(tf.squared_difference(x, x_recon))
-        #
-        # if self.enable_intra_loss and self.enable_inter_loss:        # The correct ii-loss
-        self.loss = tf.reduce_mean(self.intra_c_loss - self.inter_c_loss)
-        # elif self.enable_intra_loss and not self.enable_inter_loss:  # For experimental pupose only
-        #     self.loss = tf.reduce_mean(self.intra_c_loss)
-        # elif not self.enable_intra_loss and self.enable_inter_loss:  # For experimental pupose only
-        #     self.loss = tf.reduce_mean(-self.inter_c_loss)
-        # elif self.div_loss:                                          # For experimental pupose only
-        #     self.loss = tf.reduce_mean(self.intra_c_loss / self.inter_c_loss)
-        # else:                                                        # For experimental pupose only
-        #     self.loss = tf.reduce_mean((self.recon_loss * 1. if self.enable_recon_loss else 0.)
-        #                                + (self.intra_c_loss * 1. if self.enable_intra_loss else 0.)
-        #                                - (self.inter_c_loss * 1. if self.enable_inter_loss else 0.)
-        #                               )
+        if self.enable_recon_loss:  # For experimental pupose only
+            self.recon_loss = tf.reduce_mean(tf.squared_difference(x, x_recon))
+
+        if self.enable_intra_loss and self.enable_inter_loss:  # The correct ii-loss
+            self.loss = tf.reduce_mean(self.intra_c_loss - self.inter_c_loss)
+        elif self.enable_intra_loss and not self.enable_inter_loss:  # For experimental pupose only
+            self.loss = tf.reduce_mean(self.intra_c_loss)
+        elif not self.enable_intra_loss and self.enable_inter_loss:  # For experimental pupose only
+            self.loss = tf.reduce_mean(-self.inter_c_loss)
+        elif self.div_loss:  # For experimental pupose only
+            self.loss = tf.reduce_mean(self.intra_c_loss / self.inter_c_loss)
+        else:  # For experimental pupose only
+            self.loss = tf.reduce_mean((self.recon_loss * 1. if self.enable_recon_loss else 0.)
+                                       + (self.intra_c_loss * 1. if self.enable_intra_loss else 0.)
+                                       - (self.inter_c_loss * 1. if self.enable_inter_loss else 0.)
+                                       )
 
         # Classifier loss
         if self.enable_ce_loss:
