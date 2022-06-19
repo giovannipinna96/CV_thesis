@@ -1,15 +1,14 @@
-"""
-Source: https://github.com/shrtCKT/opennet/blob/3fe1f589926e5507777cdff17228f8c21032434c/opennet/opennet.py#L203
-"""
 import os.path
 import sys
+
+from tf_slim.nets import resnet_v1
 
 sys.path.insert(0, os.path.abspath("./simple-dnn"))
 
 import numpy as np
 import tensorflow as tf
 # import tensorflow.contrib.slim as slim
-import tf_slim as slim  # i insert this library
+import tf_slim as slim  # I install this package now slim is here!
 import scipy
 import time
 
@@ -25,9 +24,12 @@ class OpenNetBase(object):
                  x_scale=UnitPosNegScale.scale,
                  x_inverse_scale=UnitPosNegScale.inverse_scale,
                  x_reshape=None,
-                 opt=tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
-                 recon_opt=tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
-                 c_opt=tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
+                 opt=tf.compat.v1.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
+                 recon_opt=tf.compat.v1.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
+                 c_opt=tf.compat.v1.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
+                 # opt=tf.optimizers.Adam(learning_rate=0.001, beta_1=0.9),
+                 # recon_opt=tf.optimizers.Adam(learning_rate=0.001, beta_1=0.9),
+                 # c_opt=tf.optimizers.Adam(learning_rate=0.001, beta_1=0.9),
                  dist='mean_separation_spread',
                  decision_dist_fn='euclidean',
                  threshold_type='global',
@@ -119,11 +121,11 @@ class OpenNetBase(object):
                              'div_loss', 'threshold_type']
 
         with self.graph.as_default():
-            self.sess = tf.Session()
+            self.sess = tf.compat.v1.Session()  # self.sess = tf.Session()
             self.build_model()
 
             # To save and restore all the variables.
-            self.saver = tf.train.Saver()
+            self.saver = tf.compat.v1.train.Saver()
 
     def model_config(self):
         return {field: val for field, val in vars(self).items() if field in self.model_params}
@@ -162,12 +164,12 @@ class OpenNetBase(object):
         pass
 
     def bucket_mean(self, data, bucket_ids, num_buckets):
-        total = tf.unsorted_segment_sum(data, bucket_ids, num_buckets)
-        count = tf.unsorted_segment_sum(tf.ones_like(data), bucket_ids, num_buckets)
+        total = tf.compat.v1.unsorted_segment_sum(data, bucket_ids, num_buckets)
+        count = tf.compat.v1.unsorted_segment_sum(tf.ones_like(data), bucket_ids, num_buckets)
         return total / count
 
     def bucket_max(self, data, bucket_ids, num_buckets):
-        b_max = tf.unsorted_segment_max(data, bucket_ids, num_buckets)
+        b_max = tf.compat.v1.unsorted_segment_max(data, bucket_ids, num_buckets)
         return b_max
 
     def sq_difference_from_mean(self, data, class_mean):
@@ -176,7 +178,7 @@ class OpenNetBase(object):
         sq_diff_list = []
         for i in range(self.y_dim):
             sq_diff_list.append(tf.reduce_mean(
-                tf.squared_difference(data, class_mean[i]), axis=1))
+                tf.compat.v1.squared_difference(data, class_mean[i]), axis=1))
 
         return tf.stack(sq_diff_list, axis=1)
 
@@ -200,7 +202,7 @@ class OpenNetBase(object):
         """
         sq_diff = self.sq_difference_from_mean(data, class_mean)
 
-        inter_intra_sq_diff = self.bucket_mean(sq_diff, labels, 2)
+        inter_intra_sq_diff = self.bucket_mean(sq_diff, labels, 10)
         inter_class_sq_diff = inter_intra_sq_diff[0]
         intra_class_sq_diff = inter_intra_sq_diff[1]
         return intra_class_sq_diff, inter_class_sq_diff
@@ -214,9 +216,9 @@ class OpenNetBase(object):
         intra_class_sq_diff, _ = self.inter_intra_diff(data, labels, class_mean)
 
         ap_dist = self.all_pair_distance(class_mean)
-        dim = tf.shape(class_mean)[0]
-        not_diag_mask = tf.logical_not(tf.cast(tf.eye(dim), dtype=tf.bool))
-        inter_separation = tf.reduce_min(tf.boolean_mask(tensor=ap_dist, mask=not_diag_mask))
+        dim = tf.compat.v1.shape(class_mean)[0]
+        not_diag_mask = tf.compat.v1.logical_not(tf.cast(tf.eye(dim), dtype=tf.bool))
+        inter_separation = tf.compat.v1.reduce_min(tf.compat.v1.boolean_mask(tensor=ap_dist, mask=not_diag_mask))
         return intra_class_sq_diff, inter_separation
 
     def all_pair_distance(self, A):
@@ -251,6 +253,7 @@ class OpenNetBase(object):
 
     def loss_fn_training_op(self, x, y, z, logits, x_recon, class_means):
         """ Computes the loss functions and creates the update ops.
+
         :param x - input X
         :param y - labels y
         :param z - z layer transform of X.
@@ -261,13 +264,13 @@ class OpenNetBase(object):
         # Calculate intra class and inter class distance
         if self.dist == 'class_mean':  # For experimental pupose only
             self.intra_c_loss, self.inter_c_loss = self.inter_intra_diff(
-                z, tf.cast(y, tf.int32), class_means)
+                z, tf.compat.v1.cast(y, tf.int32), class_means)
         elif self.dist == 'all_pair':  # For experimental pupose only
             self.intra_c_loss, self.inter_c_loss = self.all_pair_inter_intra_diff(
                 z, tf.cast(y, tf.int32))
         elif self.dist == 'mean_separation_spread':  # ii-loss
-            self.intra_c_loss, self.inter_c_loss = self.inter_separation_intra_spred(z, tf.cast(y, tf.int32),
-                                                                                     class_means)
+            self.intra_c_loss, self.inter_c_loss = self.inter_separation_intra_spred(
+                z, tf.cast(y, tf.int32), class_means)
         elif self.dist == 'min_max':  # For experimental pupose only
             self.intra_c_loss, self.inter_c_loss = self.inter_min_intra_max(
                 z, tf.cast(y, tf.int32), class_means)
@@ -277,13 +280,13 @@ class OpenNetBase(object):
             self.recon_loss = tf.reduce_mean(tf.squared_difference(x, x_recon))
 
         if self.enable_intra_loss and self.enable_inter_loss:  # The correct ii-loss
-            self.loss = tf.reduce_mean(self.intra_c_loss - self.inter_c_loss)
+            self.loss = tf.compat.v1.reduce_mean(self.intra_c_loss - self.inter_c_loss)
         elif self.enable_intra_loss and not self.enable_inter_loss:  # For experimental pupose only
-            self.loss = tf.reduce_mean(self.intra_c_loss)
+            self.loss = tf.compat.v1.reduce_mean(self.intra_c_loss)
         elif not self.enable_intra_loss and self.enable_inter_loss:  # For experimental pupose only
-            self.loss = tf.reduce_mean(-self.inter_c_loss)
+            self.loss = tf.compat.v1.reduce_mean(-self.inter_c_loss)
         elif self.div_loss:  # For experimental pupose only
-            self.loss = tf.reduce_mean(self.intra_c_loss / self.inter_c_loss)
+            self.loss = tf.compat.v1.reduce_mean(self.intra_c_loss / self.inter_c_loss)
         else:  # For experimental pupose only
             self.loss = tf.reduce_mean((self.recon_loss * 1. if self.enable_recon_loss else 0.)
                                        + (self.intra_c_loss * 1. if self.enable_intra_loss else 0.)
@@ -294,7 +297,7 @@ class OpenNetBase(object):
         if self.enable_ce_loss:
             self.ce_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.y))
 
-        tvars = tf.trainable_variables()
+        tvars = tf.compat.v1.trainable_variables()
         e_vars = [var for var in tvars if 'enc_' in var.name]
         classifier_vars = [var for var in tvars if 'enc_' in var.name or 'classifier_' in var.name]
         recon_vars = [var for var in tvars if 'enc_' in var.name or 'dec_' in var.name]
@@ -317,10 +320,12 @@ class OpenNetBase(object):
         self.is_training = True
         count_skip = 0
         with self.graph.as_default():
-            self.sess.run(tf.global_variables_initializer())
+            self.sess.run(tf.compat.v1.global_variables_initializer())
             i = 0
+            # start with batch
             while i < self.iterations:
                 xs, ys = self._next_batch(X, y)
+                xs = xs / 255
                 xs = self.x_reformat(xs)
 
                 intra_c_loss, inter_c_loss, recon_loss, loss, ce_loss, acc, val_acc = \
@@ -352,9 +357,9 @@ class OpenNetBase(object):
                 if i % self.display_step == 0 and self.display_step > 0:
                     if (self.enable_inter_loss and self.enable_intra_loss) or self.div_loss:
                         self.update_class_stats(X, y)
-                        acc = (self.predict(xs, reformat=False) == np.argmax(ys, axis=1)).mean()
+                        acc = (self.predict(xs, reformat=False) == np.argmax(ys, axis=1).numpy()).mean()
                         if X_val is not None and y_val is not None:
-                            val_acc = (self.predict(X_val) == np.argmax(y_val, axis=1)).astype(np.float).mean()
+                            val_acc = (self.predict(X_val) == np.argmax(y_val, axis=1).numpy()).astype(np.float).mean()
 
                     self._iter_stats(i, start, intra_c_loss, inter_c_loss, recon_loss, loss, ce_loss,
                                      acc, val_acc)
@@ -367,9 +372,9 @@ class OpenNetBase(object):
         if self.display_step > 0:
             if (self.enable_inter_loss and self.enable_intra_loss) or self.div_loss:
                 self.update_class_stats(X, y)
-                acc = (self.predict(xs, reformat=False) == np.argmax(ys, axis=1)).mean()
+                acc = (self.predict(xs, reformat=False) == np.argmax(ys, axis=1).numpy()).mean()
                 if X_val is not None and y_val is not None:
-                    val_acc = (self.predict(X_val) == np.argmax(y_val, axis=1)).mean()
+                    val_acc = (self.predict(X_val) == np.argmax(y_val, axis=1).numpy()).mean()
 
             self._iter_stats(i, start, intra_c_loss, inter_c_loss, recon_loss, loss, ce_loss, acc, val_acc)
         if self.model_directory is not None:
@@ -410,11 +415,17 @@ class OpenNetBase(object):
         return per_class_cov, per_class_cov_inv
 
     def _iter_stats(self, i, start_time, intra_c_loss, inter_c_loss, recon_loss, loss, ce_loss, acc, val_acc):
+        if recon_loss is None:
+            recon_loss = 0
+        if val_acc is None:
+            val_acc = 0
+        if ce_loss is None:
+            ce_loss = 0
         if i == 0:
             print('{0:5}|{1:7}|{2:7}|{3:7}|{4:7}|{5:7}|{6:7}|{7:7}|{8:7}|'.format(
                 'i', 'Intra', 'Inter', 'Recon', 'Total', 'CrossE', 'Acc', 'V_Acc', 'TIME(s)'))
 
-        print('{0:5}|{1:7.4}|{2:7.4}|{3:7.4}|{4:7.4}|{5:7.4}|{6:7.4}|{7:7.4}|{8:7}|'.format(
+        print('{0:5}|{1:7.4f}|{2:7.4f}|{3:7.4f}|{4:7.4f}|{5:7.4f}|{6:7.4f}|{7:7.4f}|{8:7}|'.format(
             i, intra_c_loss, inter_c_loss, recon_loss, loss, ce_loss, acc, val_acc,
             int(time.time() - start_time)))
 
@@ -536,9 +547,9 @@ class OpenNetFlat(OpenNetBase):
                  x_scale=UnitPosNegScale.scale,
                  x_inverse_scale=UnitPosNegScale.inverse_scale,
                  x_reshape=None,
-                 opt=tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
-                 recon_opt=tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
-                 c_opt=tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
+                 opt=tf.compat.v1.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
+                 recon_opt=tf.compat.v1.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
+                 c_opt=tf.compat.v1.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
                  dist='mean_separation_spread',
                  decision_dist_fn='euclidean',
                  threshold_type='global',
@@ -615,12 +626,12 @@ class OpenNetFlat(OpenNetBase):
             :param x - input x.
             :param reuse - whether to reuse old network on create new one.
         Returns:
-            A tuple z, softmax input logits
+            A tuple z, softmax input logits 
         """
         net = x
         with slim.arg_scope([slim.fully_connected],
-                            weights_initializer=tf.contrib.layers.xavier_initializer(),
-                            activation_fn=self.activation_fn):
+                            weights_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
+                            activation_fn=self.activation_fn):  # tf.contrib.layers.xavier_initializer()
             for i, num_unit in enumerate(self.h_dims):
                 net = slim.fully_connected(
                     net, num_unit,
@@ -632,13 +643,13 @@ class OpenNetFlat(OpenNetBase):
         z = slim.fully_connected(
             net, self.z_dim, activation_fn=None,
             normalizer_fn=slim.batch_norm,
-            weights_initializer=tf.contrib.layers.xavier_initializer(),
-            reuse=reuse, scope='enc_z')
+            weights_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
+            reuse=reuse, scope='enc_z')  # #tf.contrib.layers.xavier_initializer() same algorithm of glorot_normal
 
         # This used when CE cost is enabled.
         logits = slim.fully_connected(
             z, self.y_dim, activation_fn=None,
-            weights_initializer=tf.contrib.layers.xavier_initializer(),
+            weights_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
             scope='classifier_logits', reuse=reuse)
 
         return z, logits
@@ -654,7 +665,7 @@ class OpenNetFlat(OpenNetBase):
         net = z
 
         with slim.arg_scope([slim.fully_connected],
-                            weights_initializer=tf.contrib.layers.xavier_initializer(),
+                            weights_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
                             activation_fn=self.activation_fn):
             h_dims_revese = [self.h_dims[i]
                              for i in range(len(self.h_dims) - 1, -1, -1)]
@@ -668,14 +679,17 @@ class OpenNetFlat(OpenNetBase):
 
         dec_out = slim.fully_connected(
             net, self.x_dim, activation_fn=tf.nn.tanh,
-            weights_initializer=tf.contrib.layers.xavier_initializer(),
+            weights_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
             reuse=reuse, scope='dec_out')
         return dec_out
 
     def build_model(self):
-        self.x = tf.placeholder(tf.float32, shape=[None, self.x_dim])
-        self.z = tf.placeholder(tf.float32, shape=[None, self.z_dim])
-        self.y = tf.placeholder(tf.float32, shape=[None, self.y_dim])
+        # (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        # self.x = tf.convert_to_tensor(x_train[:100], dtype=tf.float32)
+        # self.y = tf.convert_to_tensor(y_train[:100], dtype=tf.float32)
+        self.x = tf.compat.v1.placeholder(tf.float32, shape=[None, self.x_dim])
+        self.z = tf.compat.v1.placeholder(tf.float32, shape=[None, self.z_dim])
+        self.y = tf.compat.v1.placeholder(tf.float32, shape=[None, self.y_dim])
 
         self.z, logits = self.encoder(self.x)
 
@@ -720,9 +734,9 @@ class OpenNetCNN(OpenNetBase):
                  x_inverse_scale=UnitPosNegScale.inverse_scale,
                  x_reshape=None,
 
-                 opt=tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
-                 recon_opt=tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
-                 c_opt=tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
+                 opt=tf.compat.v1.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
+                 recon_opt=tf.compat.v1.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
+                 c_opt=tf.compat.v1.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
 
                  dist='mean_separation_spread',
                  decision_dist_fn='euclidean',
@@ -858,7 +872,7 @@ class OpenNetCNN(OpenNetBase):
         """
         net = x
         with slim.arg_scope([slim.conv2d], padding='SAME',
-                            weights_initializer=tf.contrib.layers.xavier_initializer(),
+                            weights_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
                             # tf.truncated_normal_initializer(stddev=0.01),
                             weights_regularizer=slim.l2_regularizer(0.0005),
                             activation_fn=self.activation_fn):
@@ -900,7 +914,7 @@ class OpenNetCNN(OpenNetBase):
 
         # Fully Connected Layer
         with slim.arg_scope([slim.fully_connected], reuse=reuse,
-                            weights_initializer=tf.contrib.layers.xavier_initializer(),
+                            weights_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
                             weights_regularizer=slim.l2_regularizer(0.0005),
                             activation_fn=self.activation_fn):
             for i, h_unit in enumerate(self.hidden_units):
@@ -916,12 +930,12 @@ class OpenNetCNN(OpenNetBase):
         z = slim.fully_connected(
             net, self.z_dim, activation_fn=None,
             normalizer_fn=slim.batch_norm,
-            weights_initializer=tf.contrib.layers.xavier_initializer(),
+            weights_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
             reuse=reuse, scope='enc_z')
 
         logits = slim.fully_connected(
             z, self.y_dim, activation_fn=None,
-            weights_initializer=tf.contrib.layers.xavier_initializer(),
+            weights_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
             reuse=reuse, scope='classifier_logits')
 
         return z, logits
@@ -937,7 +951,7 @@ class OpenNetCNN(OpenNetBase):
         net = z
 
         with slim.arg_scope([slim.fully_connected],
-                            weights_initializer=tf.contrib.layers.xavier_initializer(),
+                            weights_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
                             activation_fn=self.activation_fn):
             h_dims_revese = [self.hidden_units[i]
                              for i in range(len(self.hidden_units) - 1, -1, -1)]
@@ -951,16 +965,16 @@ class OpenNetCNN(OpenNetBase):
 
         dec_out = slim.fully_connected(
             net, self.x_dim[0] * self.x_dim[1] * self.x_ch, activation_fn=tf.nn.tanh,
-            weights_initializer=tf.contrib.layers.xavier_initializer(),
+            weights_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
             reuse=reuse, scope='dec_out')
         return dec_out
 
     def build_model(self):
         """ Builds the network graph.
         """
-        self.x = tf.placeholder(tf.float32, [None, self.x_dim[0], self.x_dim[1], self.x_ch])
-        self.z = tf.placeholder(tf.float32, shape=[None, self.z_dim])
-        self.y = tf.placeholder(tf.float32, shape=[None, self.y_dim])
+        self.x = tf.compat.v1.placeholder(tf.float32, [None, self.x_dim[0], self.x_dim[1], self.x_ch])
+        self.z = tf.compat.v1.placeholder(tf.float32, shape=[None, self.z_dim])
+        self.y = tf.compat.v1.placeholder(tf.float32, shape=[None, self.y_dim])
 
         self.z, logits = self.encoder(self.x)
 
@@ -968,6 +982,271 @@ class OpenNetCNN(OpenNetBase):
             self.x_recon = self.decoder(self.z)
         else:
             self.x_recon = None
+
+        # Calculate class mean
+        self.class_means = self.bucket_mean(self.z, tf.argmax(self.y, axis=1), self.y_dim)
+
+        self.loss_fn_training_op(slim.flatten(self.x), self.y, self.z,
+                                 logits, self.x_recon, self.class_means)
+
+        self.pred_prob = tf.nn.softmax(logits=logits)
+        pred = tf.argmax(self.pred_prob, axis=1)
+        actual = tf.argmax(self.y, axis=1)
+        self.acc = tf.reduce_mean(tf.cast(tf.equal(pred, actual), tf.float32))
+
+        # For Inference, set is_training. Can be done in a better, this should do for now.
+        self.is_training = False
+        self.z_test, logits_test = self.encoder(self.x, reuse=True)
+        self.pred_prob_test = tf.nn.softmax(logits=logits_test)
+        if self.enable_recon_loss:
+            self.x_recon_test = self.decoder(self.z_test, reuse=True)
+        self.is_training = True
+
+
+class OpenNetResNet(OpenNetBase):
+    """ OpenNet with convolutional and fully connected layers.
+    Current supports simple architecture with alternating cov and pooling layers.
+    """
+
+    def __init__(self, x_dim, x_ch, y_dim, #conv_units, hidden_units,
+                 z_dim=6,
+                 # kernel_sizes=[5, 5], strides=[1, 1], paddings='SAME',
+                 # pooling_enable=False, pooling_kernel=[2, 2],
+                 # pooling_stride=[2, 2], pooling_padding='SAME',
+                 # pooling_type='max',  # 'avg' or 'max'
+                 # activation_fn=tf.nn.relu,
+
+                 x_scale=UnitPosNegScale.scale,
+                 x_inverse_scale=UnitPosNegScale.inverse_scale,
+                 x_reshape=None,
+
+                 opt=tf.compat.v1.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
+                 recon_opt=tf.compat.v1.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
+                 c_opt=tf.compat.v1.train.AdamOptimizer(learning_rate=0.001, beta1=0.9),
+
+                 dist='mean_separation_spread',
+                 decision_dist_fn='euclidean',
+                 threshold_type='global',
+                 dropout=True, keep_prob=0.7,
+                 batch_size=128, iterations=5000,
+                 display_step=500, save_step=500,
+                 model_directory=None,  # Directory to save trained model to.
+                 #density_estimation_factory=None,  # deprecated
+                 ce_loss=False, recon_loss=False, inter_loss=True, intra_loss=True,
+                 div_loss=False,
+                 contamination=0.01,
+                 ):
+        """
+        Args:
+        :param x_dim - dimension of the input
+        :param y_dim - number of known classes.
+        :param conv_units - a list of ints. The number of filters in each convolutional layer.
+        :param hidden_units - a list of ints. The of units in each fully connected layer.
+        :param z_dim - the number of latent variables.
+        :param h_dims - an int or a list; number of units in the fully connected hidden layers of the
+                        encoder network.
+        :param kernel_sizes - a list or a list of lists. Size of the kernel of the conv2d.
+                              If a list with two ints all layers use the same kernel size.
+                              Otherwise if a list of list (example [[5,5], [4,4]]) each layer
+                              will have different kernel size.
+        :param strides - a list or a list of lists. The strides of each conv2d kernel.
+        :param paddings - padding for each conv2d. Default 'SAME'.
+        :param pooling_enable - if True, add pooling layer after each conv2d layer.
+        :param pooling_kernel - a list or a list of lists. The size of the pooling kernel.
+                                If a list with two ints all layers use the same kernel size.
+                                Otherwise if a list of list (example [[5,5], [4,4]]) each layer
+                                will have different kernel size.
+        :param pooling_stride - a list or a list of lists. The strides of each pooing kernel.
+        :param pooling_padding - padding for each pool2d layer. Default 'SAME'.
+        :param pooling_type - pooling layer type. supported 'avg' or 'max'. Default max_pool2d.
+        :param x_scale - an input scaling function. Default scale to range of [-1, 1].
+                         If none, the input will not be scaled.
+        :param x_inverse_scale - reverse scaling fn. by rescaling from [-1, 1] to original input scale.
+                                 If None, the the output of decoder(if there is a decoder) will rescaled.
+        :param x_reshape - a function to reshape the input before feeding to the networks input layer.
+                            If None, the input will not be reshaped.
+        :param opt - the Optimizer used when updating based on ii-loss.
+                     Used when inter_loss and intra_loss are enabled. Default is AdamOptimizer.
+        :param recon_opt - the Optimizer used when updating based on reconstruction-loss (Not used ii, ii+ce or ce).
+                           Used when recon_loss is enabled. Default is AdamOptimizer.
+        :param c_opt - the Optimizer used when updating based on cross entropy loss.
+                       Used for ce and ii+ce modes (i.e. ce_loss is enabled). Default is AdamOptimizer.
+        :param batch_size - training batch size.
+        :param iterations - number of training iterations.
+        :param display_step - training info displaying interval.
+        :param save_step - model saving interval.
+        :param model_directory - directory to save model in.
+        :param dist - ii-loss calculation mode. Only 'mean_separation_spread' should be used.
+        :param decision_dist_fn - outlier score distance functions
+        :param threshold_type - outlier threshold mode. 'global' appears to give better results.
+        :param ce_loss - Consider cross entropy loss. When enabled with intra_loss and inter_loss gives (ii+ce) mode.
+        :param recon_loss - Experimental! Avoid enabling this.
+        :param inter_loss - Consider inter-class separation. Should be enabled together with intra_loss for (ii-loss).
+        :param intra_loss - Consider intra-class spread. Should be enabled together with inter_loss for (ii-loss).
+        :param div_loss and combined_loss - Experimental. Avoid enabling them.
+        :param contamination - contamination ratio used for outlier threshold estimation.
+        """
+        self.x_ch = x_ch
+
+        # Conv layer config
+        # self.conv_units = conv_units
+        # if isinstance(kernel_sizes[0], list) or isinstance(kernel_sizes[0], tuple):
+        #     assert len(conv_units) == len(kernel_sizes)
+        #     self.kernel_sizes = kernel_sizes
+        # else:
+        #     self.kernel_sizes = [kernel_sizes] * len(conv_units)
+        #
+        # if isinstance(strides[0], list) or isinstance(strides[0], tuple):
+        #     assert len(conv_units) == len(strides)
+        #     self.strides = strides
+        # else:
+        #     self.strides = [strides] * len(conv_units)
+        #
+        # if isinstance(paddings, list):
+        #     assert len(conv_units) == len(paddings)
+        #     self.paddings = paddings
+        # else:
+        #     self.paddings = [paddings] * len(conv_units)
+        #
+        # # Conv pooling config
+        # self.pooling_enable = pooling_enable
+        # assert pooling_type in ['avg', 'max']  # supported pooling types.
+        # self.pooling_type = pooling_type
+        #
+        # if isinstance(pooling_kernel[0], list) or isinstance(pooling_kernel[0], tuple):
+        #     assert len(conv_units) == len(pooling_kernel)
+        #     self.pooling_kernels = pooling_kernel
+        # else:
+        #     self.pooling_kernels = [pooling_kernel] * len(conv_units)
+        #
+        # if isinstance(pooling_stride[0], list) or isinstance(pooling_stride[0], tuple):
+        #     assert len(conv_units) == len(pooling_stride)
+        #     self.pooling_strides = pooling_stride
+        # else:
+        #     self.pooling_strides = [pooling_stride] * len(conv_units)
+        #
+        # if isinstance(pooling_padding, list):
+        #     assert len(conv_units) == len(pooling_padding)
+        #     self.pooling_paddings = pooling_padding
+        # else:
+        #     self.pooling_paddings = [pooling_padding] * len(conv_units)
+
+        # Fully connected layer config
+        #self.hidden_units = hidden_units
+
+        #self.activation_fn = activation_fn
+
+        assert decision_dist_fn in ['euclidean', 'mahalanobis']
+
+        super(OpenNetResNet, self).__init__(
+            x_dim, y_dim, z_dim=z_dim,
+            x_scale=x_scale, x_inverse_scale=x_inverse_scale, x_reshape=x_reshape,
+            opt=opt, recon_opt=recon_opt, c_opt=c_opt, threshold_type=threshold_type,
+            dist=dist, decision_dist_fn=decision_dist_fn, dropout=dropout, keep_prob=keep_prob,
+            batch_size=batch_size, iterations=iterations,
+            display_step=display_step, save_step=save_step,
+            model_directory=model_directory,
+            ce_loss=ce_loss, recon_loss=recon_loss, inter_loss=inter_loss, intra_loss=intra_loss,
+            div_loss=div_loss, contamination=contamination)
+
+        self.model_params += ['x_ch', 'conv_units', 'kernel_sizes', 'strides', 'paddings',
+                              'pooling_enable', 'pooling_type', 'pooling_kernel', 'pooling_strides',
+                              'pooling_padding', 'hidden_units', 'activation_fn']
+
+    def build_conv(self, x, reuse=False):
+        """ Builds the convolutional layers.
+        """
+        net = x
+        with slim.arg_scope(resnet_v1.resnet_arg_scope()):
+            net, end_points = resnet_v1.resnet_v1_50(
+                net,
+                num_classes=10,
+                is_training=True,
+                reuse=tf.compat.v1.AUTO_REUSE)
+
+        # with slim.arg_scope([slim.conv2d], padding='SAME',
+        #                     weights_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
+        #                     # tf.truncated_normal_initializer(stddev=0.01),
+        #                     weights_regularizer=slim.l2_regularizer(0.0005),
+        #                     activation_fn=self.activation_fn):
+        #     for i, (c_unit, kernel_size, stride, padding, p_kernel, p_stride, p_padding) in enumerate(zip(
+        #             self.conv_units, self.kernel_sizes, self.strides, self.paddings,
+        #             self.pooling_kernels, self.pooling_strides, self.pooling_paddings)):
+        #         # Conv
+        #         net = slim.conv2d(net, c_unit, kernel_size, stride=stride,
+        #                           normalizer_fn=slim.batch_norm,
+        #                           reuse=reuse, padding=padding, scope='enc_conv{0}'.format(i))
+        #
+        #         if self.display_step > 0:
+        #             print('Conv_{0}.shape = {1}'.format(i, net.get_shape()))
+        #         # Pooling
+        #         if self.pooling_enable:
+        #             if self.pooling_type == 'max':
+        #                 net = slim.max_pool2d(net, kernel_size=p_kernel, scope='enc_pool{0}'.format(i),
+        #                                       stride=p_stride, padding=p_padding)
+        #             elif self.pooling_type == 'avg':
+        #                 net = slim.avg_pool2d(net, kernel_size=p_kernel, scope='enc_pool{0}'.format(i),
+        #                                       stride=p_stride, padding=p_padding)
+        #
+        #             if self.display_step > 0:
+        #                 print('Pooling_{0}.shape = {1}'.format(i, net.get_shape()))
+                # Dropout: Do NOT use dropout for conv layers. Experiments show it gives poor result.
+        return net
+
+    def encoder(self, x, reuse=False):
+        """ Builds the network.
+        Args:
+            :param x - input x.
+            :param reuse - whether to reuse old network on create new one.
+        Returns:
+            Latent variables z and logits(which will be used if ce_loss is enabled.)
+        """
+        # Conv Layers
+        net = self.build_conv(x, reuse=reuse)
+        net = slim.flatten(net)
+
+        # Fully Connected Layer
+        # with slim.arg_scope([slim.fully_connected], reuse=reuse,
+        #                     weights_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
+        #                     weights_regularizer=slim.l2_regularizer(0.0005),
+        #                     activation_fn=self.activation_fn):
+        #     for i, h_unit in enumerate(self.hidden_units):
+        #         net = slim.fully_connected(net, h_unit,
+        #                                    normalizer_fn=slim.batch_norm,
+        #                                    scope='enc_full{0}'.format(i))
+        #         if self.dropout:
+        #             net = slim.dropout(net, keep_prob=self.keep_prob, is_training=self.is_training,
+        #                                scope='enc_full_dropout{0}'.format(i))
+
+        # Latent Variable
+        # It is very important to batch normalize the output of encoder.
+        z = slim.fully_connected(
+            net, self.z_dim, activation_fn=None,
+            normalizer_fn=slim.batch_norm,
+            weights_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
+            reuse=reuse, scope='enc_z')
+
+        logits = slim.fully_connected(
+            z, self.y_dim, activation_fn=None,
+            weights_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
+            reuse=reuse, scope='classifier_logits')
+
+        return z, logits
+
+
+    def build_model(self):
+        """ Builds the network graph.
+        """
+        self.x = tf.compat.v1.placeholder(tf.float32, [None, self.x_dim[0], self.x_dim[1], self.x_ch])
+        self.z = tf.compat.v1.placeholder(tf.float32, shape=[None, self.z_dim])
+        self.y = tf.compat.v1.placeholder(tf.float32, shape=[None, self.y_dim])
+
+        self.z, logits = self.encoder(self.x)
+
+        # if self.enable_recon_loss:
+        #     self.x_recon = self.decoder(self.z)
+        # else:
+        self.x_recon = None
 
         # Calculate class mean
         self.class_means = self.bucket_mean(self.z, tf.argmax(self.y, axis=1), self.y_dim)
