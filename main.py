@@ -30,7 +30,9 @@ if __name__ == "__main__":
     parser.add_argument("--out_net", type=int, default=18)
     parser.add_argument("--is_feature_extraction", type=bool, default=True)
     parser.add_argument("--weights_save_path", type=str, default="models/model.pt")
+    parser.add_argument("--pickle_save_path", type=str, default="out")
     parser.add_argument("--is_ml", type=bool, default=True)
+    parser.add_argument("--temperature", type=float, default=0.1)
     parser.add_argument
     args = parser.parse_args()
     # set all parameters
@@ -47,7 +49,8 @@ if __name__ == "__main__":
         loss_type=args.loss_type,
         out_net=args.out_net,
         is_feature_extraction=args.is_feature_extraction,
-        is_ml = args.is_ml
+        is_ml = args.is_ml,
+        optimizer=args.optimizer
     )
     # transform the dataset
     transform_train = transformation.get_transform_train()
@@ -93,7 +96,7 @@ if __name__ == "__main__":
     elif allParams.get_loss_type() == 'triplet':
         loss_fn = torch.nn.TripletMarginLoss()
     else:
-        loss_fn = lossContrastiveLearning(temperature=1.0)
+        loss_fn = lossContrastiveLearning(temperature=args.temperature)
 
     if allParams.get_model() == 'vgg16':
         net.classifier[6] = torch.nn.Linear(in_features=4096,
@@ -136,9 +139,9 @@ if __name__ == "__main__":
                       loss_type=allParams.get_loss_type()
                       )
     # test
-    print('Start Test')
-    if allParams.get_loss_type() == 'triplet':
-        loss_fn = torch.nn.CrossEntropyLoss()
+    if allParams.get_loss_type() != 'triplet':
+        print('Start Test')
+    #    loss_fn = torch.nn.CrossEntropyLoss()
     # if allParams.get_loss_type() == 'triplet':
     #     test.test_model_triplet(net,
     #                     testloader,
@@ -147,12 +150,12 @@ if __name__ == "__main__":
     #                     loss_type=allParams.get_loss_type()
     #                     )
     #else:
-    test.test_model(net,
-                    testloader,
-                    loss_fn=loss_fn,
-                    device=allParams.get_device(),
-                    loss_type=allParams.get_loss_type()
-                    )
+        test.test_model(net,
+                        testloader,
+                        loss_fn=loss_fn,
+                        device=allParams.get_device(),
+                        loss_type=allParams.get_loss_type()
+                        )
 
     #feat from normal predict
     print('Predict Net')
@@ -160,7 +163,7 @@ if __name__ == "__main__":
 
     try:
         print('Saving pickle_general...')
-        utils.save_obj(file_name="pickle_general",
+        utils.save_obj(file_name=f"./{args.pickle_save_path}/pickle_general",
                     first=allParams,
                     second=net,
                     third=transform_train,
@@ -172,7 +175,7 @@ if __name__ == "__main__":
                     ninth=scheduler
                     )
         print('Saving pickle_predict Net...')
-        utils.save_obj(file_name="pickle_predict_net",
+        utils.save_obj(file_name=f"./{args.pickle_save_path}/pickle_predict_net",
                         first=feat_predict,
                         second=feat_predict_leables
                         )
@@ -196,7 +199,7 @@ if __name__ == "__main__":
                                                                          )  # is a numpy array
         try:
             print('Saving pickle_feat_extraction...')
-            utils.save_obj(file_name="pickle_feat_extraction",
+            utils.save_obj(file_name=f"./{args.pickle_save_path}/pickle_feat_extraction",
                             first=feat_map,
                             second=feat_map_labels
                         )
@@ -245,7 +248,7 @@ if __name__ == "__main__":
                 # save the features extraction objects
                 print('Start saving obj')
                 print('Saving pickle clustering and svm...')
-                utils.save_obj(file_name="pickle_cluster_svm",
+                utils.save_obj(file_name=f"./{args.pickle_save_path}/pickle_cluster_svm",
                             first=feat_map,
                             second=feat_map_labels,
                             third=list_results_clustering,
