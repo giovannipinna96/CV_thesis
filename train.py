@@ -212,7 +212,10 @@ def train_epoch_iiloss(
         ce_save_values.append(ce_performance_meter.avg)
         step += 1
     
-    return ii_save_values, ce_save_values
+    print('Compute threshold')
+    threshold = compute_threshold(model=model, dataloder=dataloader, num_classes=num_classes, device=device)
+    
+    return ii_save_values, ce_save_values, threshold
 
 
 def compute_embeddings(model, dataloader, device):
@@ -252,7 +255,7 @@ def train_model(
     model, dataloader, loss_fn, optimizer, num_epochs, checkpoint_loc=None, checkpoint_name="checkpoint.pt",
     performance=accuracy, lr_scheduler=None, device=None, lr_scheduler_step_on_epoch=True, loss_type='crossEntropy'
 ):
-
+    threshold = None
     # create the folder for the checkpoints (if it's not None)
     if checkpoint_loc is not None:
         os.makedirs(checkpoint_loc, exist_ok=True)
@@ -288,7 +291,7 @@ def train_model(
             ii_performance_meter = AverageMeter()
             ce_loss_meter = AverageMeter()
             ce_performance_meter = AverageMeter()
-            ii, ce = train_epoch_iiloss(model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
+            ii, ce, threshold = train_epoch_iiloss(model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
                         performance, device, lr_scheduler_batch, loss_type)
         
         save_values_train.append(v)
@@ -316,7 +319,11 @@ def train_model(
             else:
                 lr_scheduler.step()
     utils.save_obj(file_name="save_value_train", first= save_values_train)
-    return loss_meter.sum, performance_meter.avg
+
+    if threshold is None:
+        return loss_meter.sum, performance_meter.avg
+    else:
+        return loss_meter.sum, performance_meter.avg, threshold
 
 
 

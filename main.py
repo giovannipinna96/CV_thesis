@@ -133,7 +133,7 @@ if __name__ == "__main__":
 
     # train
     print('Start Train')
-    train.train_model(net,
+    _, _, threshold = train.train_model(net,
                       trainloader,
                       loss_fn,
                       optimizer,
@@ -143,7 +143,7 @@ if __name__ == "__main__":
                       loss_type=allParams.get_loss_type()
                       )
     # test
-    if allParams.get_loss_type() != 'triplet':
+    if allParams.get_loss_type() != 'triplet' and allParams.get_loss_type() != 'iiloss':
         print('Start Test')
     #    loss_fn = torch.nn.CrossEntropyLoss()
     # if allParams.get_loss_type() == 'triplet':
@@ -159,6 +159,13 @@ if __name__ == "__main__":
                         loss_fn=loss_fn,
                         device=allParams.get_device(),
                         loss_type=allParams.get_loss_type()
+                        )
+    else:
+        test.test_model_iiloss(net,
+                        testloader,
+                        loss_fn=loss_fn,
+                        device=allParams.get_device(),
+                        threshold=threshold
                         )
 
     #feat from normal predict
