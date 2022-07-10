@@ -1,5 +1,6 @@
 from cProfile import label
 import imp
+from tkinter.messagebox import NO
 from xml.dom.expatbuilder import theDOMImplementation
 from cv2 import norm, threshold
 from numpy import diff, percentile
@@ -245,15 +246,12 @@ def compute_threshold(model, dataloder, num_classes, device):
     threshold = percentile(os, 1)
 
     return threshold
-    
-
-
 
    
 
 def train_model(
     model, dataloader, loss_fn, optimizer, num_epochs, checkpoint_loc=None, checkpoint_name="checkpoint.pt",
-    performance=accuracy, lr_scheduler=None, device=None, lr_scheduler_step_on_epoch=True, loss_type='crossEntropy'
+    performance=accuracy, lr_scheduler=None, device=None, lr_scheduler_step_on_epoch=True, loss_type='crossEntropy', num_classes=None
 ):
     threshold = None
     # create the folder for the checkpoints (if it's not None)
@@ -292,7 +290,7 @@ def train_model(
             ce_loss_meter = AverageMeter()
             ce_performance_meter = AverageMeter()
             ii, ce, threshold = train_epoch_iiloss(model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
-                        performance, device, lr_scheduler_batch, loss_type)
+                        performance, device, lr_scheduler_batch, num_classes=num_classes)
         
         save_values_train.append(v)
         #save_values_train.append(v2)
@@ -330,20 +328,22 @@ def train_model(
 def compute_ii_loss(out_z, labels, num_classes):
     intra_spread = torch.Tensor([0])
     inter_separation = torch.inf
-    class_mean = bucket_mean(out_z, labels, num_classes)
+    class_mean = bucket_mean(out_z, labels) #TODO questo è il k dell embedding
     for j in range(num_classes):
         data_class = out_z[labels == j]
-        difference_from_mean = data_class - class_mean[j].unsqueeze(1)
+        difference_from_mean = data_class - class_mean[j]
         norm_from_mean = difference_from_mean.norm()**2
         intra_spread += norm_from_mean
         class_mean_previous = class_mean[:j]
         norm_form_previous_means = (class_mean_previous - class_mean[j]).norm()**2
         inter_separation = min(inter_separation, norm_form_previous_means.min())
 
-    return intra_spread, inter_separation
+    return intra_spread - inter_separation
 
-def bucket_mean(embeddings, labels, num_classes):
-    tot = torch.zeros(num_classes).scatter_add(0, labels, embeddings)
-    count = torch.zeros(num_classes).scatter_add(0, labels, torch.ones_like(embeddings))
+def bucket_mean(embeddings, labels):
+    tot = torch.zeros(embeddings.shape[0], embeddings.shape[1]).index_add(0, labels, embeddings)
+    #tot = torch.zeros(labels.shape[0]).scatter_add(0, labels, embeddings)
+    #count = torch.zeros(labels.shape[0]).scatter_add(0, labels, torch.ones_like(embeddings))
+    count = torch.zeros(embeddings.shape[0], embeddings.shape[1]).index_add(0, labels, torch.ones_like(embeddings))
 
     return tot/count

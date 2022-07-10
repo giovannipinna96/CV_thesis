@@ -22,10 +22,10 @@ import data_triplet
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", type=int, default=15)
+    parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--root_train", type=str, default="ImageSet/train")
     parser.add_argument("--root_test", type=str, default="ImageSet/test")
-    parser.add_argument("--loss_type", type=str, default="crossEntropy")
+    parser.add_argument("--loss_type", type=str, default="iiloss")
     parser.add_argument("--optimizer", type=str, default="sgd")
     parser.add_argument("--out_net", type=int, default=18)
     parser.add_argument("--is_feature_extraction", type=bool, default=True)
@@ -84,7 +84,7 @@ if __name__ == "__main__":
                                                                     )                                                          
     #define the number of different classes
     num_classes = len(trainset.classes)
-    if allParams.get_loss_type != 'iiloss':
+    if allParams.get_loss_type() != 'iiloss':
         # import the basic net
         net = createNet.create_network(allParams.get_model(),
                                     allParams.get_pretrained(),
@@ -140,20 +140,12 @@ if __name__ == "__main__":
                       allParams.get_num_epochs(),
                       lr_scheduler=scheduler,
                       device=allParams.get_device(),
-                      loss_type=allParams.get_loss_type()
+                      loss_type=allParams.get_loss_type(),
+                      num_classes=num_classes
                       )
     # test
     if allParams.get_loss_type() != 'triplet' and allParams.get_loss_type() != 'iiloss':
         print('Start Test')
-    #    loss_fn = torch.nn.CrossEntropyLoss()
-    # if allParams.get_loss_type() == 'triplet':
-    #     test.test_model_triplet(net,
-    #                     testloader,
-    #                     loss_triplet_fn=loss_fn,
-    #                     device=allParams.get_device(),
-    #                     loss_type=allParams.get_loss_type()
-    #                     )
-    #else:
         test.test_model(net,
                         testloader,
                         loss_fn=loss_fn,
