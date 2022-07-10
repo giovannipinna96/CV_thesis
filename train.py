@@ -1,7 +1,8 @@
 from cProfile import label
 import imp
-from cv2 import norm
-from numpy import diff
+from xml.dom.expatbuilder import theDOMImplementation
+from cv2 import norm, threshold
+from numpy import diff, percentile
 import torch
 import torchvision
 import os
@@ -167,10 +168,9 @@ def train_epoch(
     return save_values
 
 def train_epoch_iiloss(
-    model, dataloader, optimizer, ii_loss_meter, ii_performance_meter,ce_loss_meter, ce_performance_meter, performance, device,
+    model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter,ce_loss_meter, ce_performance_meter, performance, device,
     lr_scheduler, num_classes
 ):
-    loss_fn = torch.nn.CrossEntropyLoss()
     step = 0
     ii_save_values = []
     ce_save_values = []
@@ -230,7 +230,23 @@ def compute_embeddings(model, dataloader, device):
     label = torch.stack(labels)
     mean = bucket_mean(embedding, label)
 
-    #TODO c'è un return? quale?
+    return embedding, label, mean  #TODO c'è un return? quale?
+
+
+def compute_threshold(model, dataloder, num_classes, device):
+    embedding, label, mean = compute_embeddings(model, dataloder, device)
+    os = []
+    for j in range(num_classes):
+        os.append(min((mean[j] - embedding[j]).norm()**2))
+    os.sort()
+    threshold = percentile(os, 1)
+
+    return threshold
+    
+
+
+
+   
 
 def train_model(
     model, dataloader, loss_fn, optimizer, num_epochs, checkpoint_loc=None, checkpoint_name="checkpoint.pt",
@@ -259,11 +275,11 @@ def train_model(
             f"Epoch {epoch+1} --- learning rate {optimizer.param_groups[0]['lr']:.5f}")
 
         lr_scheduler_batch = lr_scheduler if not lr_scheduler_step_on_epoch else None
-        if type(loss_fn) == torch.nn.modules.loss.TripletMarginLoss:
+        if loss_type == 'triplet':
             v = train_epoch_triplet(model, dataloader, loss_fn, optimizer, loss_meter, device, lr_scheduler_batch, performance_meter,
               performance, optim_step_each_ite=1)
         
-        elif type(loss_fn) == torch.nn.modules.loss.CrossEntropyLoss:
+        elif loss_type == 'crossEntropy':
             v = train_epoch(model, dataloader, loss_fn, optimizer, loss_meter, performance_meter,
                         performance, device, lr_scheduler_batch, loss_type)
 
@@ -272,7 +288,7 @@ def train_model(
             ii_performance_meter = AverageMeter()
             ce_loss_meter = AverageMeter()
             ce_performance_meter = AverageMeter()
-            ii, ce = train_epoch_iiloss(model, dataloader, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
+            ii, ce = train_epoch_iiloss(model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
                         performance, device, lr_scheduler_batch, loss_type)
         
         save_values_train.append(v)

@@ -66,7 +66,7 @@ if __name__ == "__main__":
                                                                     transform_test,
                                                                     lazy=True # ???
                                                                     )  
-    elif allParams.get_loss_type() == 'crossEntropy':
+    elif allParams.get_loss_type() == 'crossEntropy' or allParams.get_loss_type() == 'iiloss':
          trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
                                                                     allParams.get_root_test(),
                                                                     transform_train,
@@ -84,30 +84,34 @@ if __name__ == "__main__":
                                                                     )                                                          
     #define the number of different classes
     num_classes = len(trainset.classes)
+    if allParams.get_loss_type != 'iiloss':
+        # import the basic net
+        net = createNet.create_network(allParams.get_model(),
+                                    allParams.get_pretrained(),
+                                    allParams.get_not_freeze()
+                                    )
+        # define the loss function and set the last part/layer of the network
+        if allParams.get_loss_type() == 'crossEntropy':
+            loss_fn = torch.nn.CrossEntropyLoss()
+        elif allParams.get_loss_type() == 'triplet':
+            loss_fn = torch.nn.TripletMarginLoss()
+        else:
+            loss_fn = lossContrastiveLearning(temperature=args.temperature)
 
-    # import the basic net
-    net = createNet.create_network(allParams.get_model(),
-                                   allParams.get_pretrained(),
-                                   allParams.get_not_freeze()
-                                   )
-    # define the loss function and set the last part/layer of the network
-    if allParams.get_loss_type() == 'crossEntropy':
+        if allParams.get_model() == 'vgg16':
+            net.classifier[6] = torch.nn.Linear(in_features=4096,
+                                                out_features=allParams.get_out_net(),
+                                                bias=True
+                                                )
+        else:
+            net.fc = torch.nn.Linear(in_features=2048,
+                                    out_features=allParams.get_out_net(),
+                                    bias=True
+                                    )
+    
+    else:
         loss_fn = torch.nn.CrossEntropyLoss()
-    elif allParams.get_loss_type() == 'triplet':
-        loss_fn = torch.nn.TripletMarginLoss()
-    else:
-        loss_fn = lossContrastiveLearning(temperature=args.temperature)
-
-    if allParams.get_model() == 'vgg16':
-        net.classifier[6] = torch.nn.Linear(in_features=4096,
-                                            out_features=allParams.get_out_net(),
-                                            bias=True
-                                            )
-    else:
-        net.fc = torch.nn.Linear(in_features=2048,
-                                out_features=allParams.get_out_net(),
-                                bias=True
-                                )
+        net = createNet.resNet50Costum(num_classes)
 
     # set optimizer
     if allParams.optimizer.lower() == "sgd":
