@@ -153,6 +153,7 @@ if __name__ == "__main__":
                         loss_type=allParams.get_loss_type()
                         )
     else:
+        print('Start Test ii loss')
         test.test_model_iiloss(net,
                         testloader,
                         loss_fn=loss_fn,

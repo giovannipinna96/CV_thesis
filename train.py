@@ -172,6 +172,7 @@ def train_epoch_iiloss(
     model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter,ce_loss_meter, ce_performance_meter, performance, device,
     lr_scheduler, num_classes
 ):
+    print('Start Train ii loss')
     step = 0
     ii_save_values = []
     ce_save_values = []
