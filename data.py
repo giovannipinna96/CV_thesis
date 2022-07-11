@@ -83,18 +83,19 @@ def _get_dataloader(dataset, batch_size, shuffle, num_workers, **kwargs):
 def _get_balance_data_loaders(dataset, batch_size, shuffle, num_workers, **kwargs):
     # Split into training and test
     indices = list(range(len(dataset)))
-    #if shuffle:
-    #    np.random.shuffle(indices)
+    if shuffle:
+        np.random.shuffle(indices)
     #split = int(np.floor(test_size * len(dataset)))
     #train_idx, test_idx = indices[split:], indices[:split]
+    one_hot_labels = torch.nn.functional.one_hot(torch.Tensor(dataset.targets).to(torch.int64))
 
     sampler = MultilabelBalancedRandomSampler(
-        dataset.targets, indices, class_choice="least_sampled"
+        one_hot_labels, indices, class_choice="least_sampled"
     )
     #test_sampler = SubsetRandomSampler(test_idx)
 
     # Create data loaders
-    loader = DataLoader(dataset, batch_size=batch_size, sampler=sampler,shuffle=shuffle,
+    loader = DataLoader(dataset, batch_size=batch_size, sampler=sampler,
                         num_workers=num_workers, **kwargs)
     #test_loader = DataLoader(dataset, batch_size=batch_size, sampler=test_sampler, shuffle=shuffle, num_workers=num_workers, **kwargs)
     return loader #, test_loader
@@ -105,7 +106,7 @@ def get_dataloaders(
     trainset = _get_dataset(root_train, transform_train)
     testset = _get_dataset(root_test, transform_test)
     # TODO
-    # Aggiungere un sampler al dataloader??
+    # Aggiunto sampler al dataloader ma fa lo shuffle in quromatico??
     trainloader = _get_dataloader(trainset, batch_size_train, shuffle=True, num_workers=8, **kwargs)
     testloader = _get_dataloader(testset, batch_size_test, shuffle=False, num_workers=8, **kwargs)
     #a = _get_balance_data_loaders(trainset, batch_size_train, shuffle=True, num_workers=8, **kwargs)
