@@ -72,7 +72,8 @@ if __name__ == "__main__":
                                                                     transform_train,
                                                                     transform_test,
                                                                     allParams.get_batch_size_train(),
-                                                                    allParams.get_batch_size_test()
+                                                                    allParams.get_batch_size_test(),
+                                                                    balance=False
                                                                     )     
     else:
         trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
@@ -80,7 +81,8 @@ if __name__ == "__main__":
                                                                     utils.TwoCropTransform(transform_train),
                                                                     utils.TwoCropTransform(transform_test),
                                                                     allParams.get_batch_size_train(),
-                                                                    allParams.get_batch_size_test()
+                                                                    allParams.get_batch_size_test(),
+                                                                    balance=False
                                                                     )                                                          
     #define the number of different classes
     num_classes = len(trainset.classes)

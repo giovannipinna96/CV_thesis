@@ -101,16 +101,18 @@ def _get_balance_data_loaders(dataset, batch_size, shuffle, num_workers, **kwarg
     return loader #, test_loader
 
 def get_dataloaders(
-    root_train, root_test, transform_train, transform_test, batch_size_train, batch_size_test, **kwargs
+    root_train, root_test, transform_train, transform_test, batch_size_train, batch_size_test, balance, **kwargs
 ):
     trainset = _get_dataset(root_train, transform_train)
     testset = _get_dataset(root_test, transform_test)
     # TODO
     # Aggiunto sampler al dataloader ma fa lo shuffle in quromatico??
-    trainloader = _get_dataloader(trainset, batch_size_train, shuffle=True, num_workers=8, **kwargs)
-    testloader = _get_dataloader(testset, batch_size_test, shuffle=False, num_workers=8, **kwargs)
-    #a = _get_balance_data_loaders(trainset, batch_size_train, shuffle=True, num_workers=8, **kwargs)
-    #b = _get_balance_data_loaders(testset, batch_size_test, shuffle=False, num_workers=8, **kwargs)
+    if not balance:
+        trainloader = _get_dataloader(trainset, batch_size_train, shuffle=True, num_workers=8, **kwargs)
+        testloader = _get_dataloader(testset, batch_size_test, shuffle=False, num_workers=8, **kwargs)
+    else:
+        trainloader = _get_balance_data_loaders(trainset, batch_size_train, shuffle=True, num_workers=8, **kwargs)
+        testloader = _get_balance_data_loaders(testset, batch_size_test, shuffle=False, num_workers=8, **kwargs)
     return trainloader, testloader, trainset, testset
 
 
