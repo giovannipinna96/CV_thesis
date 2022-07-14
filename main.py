@@ -22,10 +22,10 @@ import data_triplet
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", type=int, default=15)
+    parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--root_train", type=str, default="ImageSet/train")
     parser.add_argument("--root_test", type=str, default="ImageSet/test")
-    parser.add_argument("--loss_type", type=str, default="crossEntropy")
+    parser.add_argument("--loss_type", type=str, default="iiloss")
     parser.add_argument("--optimizer", type=str, default="sgd")
     parser.add_argument("--out_net", type=int, default=18)
     parser.add_argument("--is_feature_extraction", type=bool, default=True)
@@ -66,13 +66,14 @@ if __name__ == "__main__":
                                                                     transform_test,
                                                                     lazy=True # ???
                                                                     )  
-    elif allParams.get_loss_type() == 'crossEntropy':
+    elif allParams.get_loss_type() == 'crossEntropy' or allParams.get_loss_type() == 'iiloss':
          trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
                                                                     allParams.get_root_test(),
                                                                     transform_train,
                                                                     transform_test,
                                                                     allParams.get_batch_size_train(),
-                                                                    allParams.get_batch_size_test()
+                                                                    allParams.get_batch_size_test(),
+                                                                    balance=False
                                                                     )     
     else:
         trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
@@ -80,34 +81,39 @@ if __name__ == "__main__":
                                                                     utils.TwoCropTransform(transform_train),
                                                                     utils.TwoCropTransform(transform_test),
                                                                     allParams.get_batch_size_train(),
-                                                                    allParams.get_batch_size_test()
+                                                                    allParams.get_batch_size_test(),
+                                                                    balance=False
                                                                     )                                                          
     #define the number of different classes
     num_classes = len(trainset.classes)
+    if allParams.get_loss_type() != 'iiloss':
+        # import the basic net
+        net = createNet.create_network(allParams.get_model(),
+                                    allParams.get_pretrained(),
+                                    allParams.get_not_freeze()
+                                    )
+        # define the loss function and set the last part/layer of the network
+        if allParams.get_loss_type() == 'crossEntropy':
+            loss_fn = torch.nn.CrossEntropyLoss()
+        elif allParams.get_loss_type() == 'triplet':
+            loss_fn = torch.nn.TripletMarginLoss()
+        else:
+            loss_fn = lossContrastiveLearning(temperature=args.temperature)
 
-    # import the basic net
-    net = createNet.create_network(allParams.get_model(),
-                                   allParams.get_pretrained(),
-                                   allParams.get_not_freeze()
-                                   )
-    # define the loss function and set the last part/layer of the network
-    if allParams.get_loss_type() == 'crossEntropy':
+        if allParams.get_model() == 'vgg16':
+            net.classifier[6] = torch.nn.Linear(in_features=4096,
+                                                out_features=allParams.get_out_net(),
+                                                bias=True
+                                                )
+        else:
+            net.fc = torch.nn.Linear(in_features=2048,
+                                    out_features=allParams.get_out_net(),
+                                    bias=True
+                                    )
+    
+    else:
         loss_fn = torch.nn.CrossEntropyLoss()
-    elif allParams.get_loss_type() == 'triplet':
-        loss_fn = torch.nn.TripletMarginLoss()
-    else:
-        loss_fn = lossContrastiveLearning(temperature=args.temperature)
-
-    if allParams.get_model() == 'vgg16':
-        net.classifier[6] = torch.nn.Linear(in_features=4096,
-                                            out_features=allParams.get_out_net(),
-                                            bias=True
-                                            )
-    else:
-        net.fc = torch.nn.Linear(in_features=2048,
-                                out_features=allParams.get_out_net(),
-                                bias=True
-                                )
+        net = createNet.resNet50Costum(num_classes)
 
     # set optimizer
     if allParams.optimizer.lower() == "sgd":
@@ -129,32 +135,32 @@ if __name__ == "__main__":
 
     # train
     print('Start Train')
-    train.train_model(net,
+    _, _, threshold = train.train_model(net,
                       trainloader,
                       loss_fn,
                       optimizer,
                       allParams.get_num_epochs(),
                       lr_scheduler=scheduler,
                       device=allParams.get_device(),
-                      loss_type=allParams.get_loss_type()
+                      loss_type=allParams.get_loss_type(),
+                      num_classes=num_classes
                       )
     # test
-    if allParams.get_loss_type() != 'triplet':
+    if allParams.get_loss_type() != 'triplet' and allParams.get_loss_type() != 'iiloss':
         print('Start Test')
-    #    loss_fn = torch.nn.CrossEntropyLoss()
-    # if allParams.get_loss_type() == 'triplet':
-    #     test.test_model_triplet(net,
-    #                     testloader,
-    #                     loss_triplet_fn=loss_fn,
-    #                     device=allParams.get_device(),
-    #                     loss_type=allParams.get_loss_type()
-    #                     )
-    #else:
         test.test_model(net,
                         testloader,
                         loss_fn=loss_fn,
                         device=allParams.get_device(),
                         loss_type=allParams.get_loss_type()
+                        )
+    else:
+        print('Start Test ii loss')
+        test.test_model_iiloss(net,
+                        testloader,
+                        loss_fn=loss_fn,
+                        device=allParams.get_device(),
+                        threshold=threshold
                         )
 
     #feat from normal predict
