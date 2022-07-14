@@ -224,25 +224,26 @@ def compute_embeddings(model, dataloader, device):
     embeddings = []
     labels = []
     model.eval()
-    for X, y in tqdm(dataloader):
-        X = X.to(device)
-        y = y.to(device)
-        labels.append(y)
-        out_z, _ = model(X)
-        embeddings.append(out_z)
+    with torch.no_grad():
+        for X, y in tqdm(dataloader):
+            X = X.to(device)
+            y = y.to(device)
+            labels.append(y)
+            out_z, _ = model(X)
+            embeddings.append(out_z)
 
     embedding = torch.stack(embeddings)
     label = torch.stack(labels)
     mean = bucket_mean(embedding, label)
 
-    return embedding, label, mean  #TODO c'è un return? quale?
+    return embedding, label, mean  
 
 
 def compute_threshold(model, dataloder, num_classes, device):
     embedding, label, mean = compute_embeddings(model, dataloder, device)
     os = []
     for j in range(num_classes):
-        os.append(min((mean[j] - embedding[j]).norm()**2))
+        os.append(min((mean[j] - embedding[j]).norm()**2)) #TODO iterare sugli embedding non sulle classi
     os.sort()
     threshold = percentile(os, 1)
 
@@ -329,7 +330,7 @@ def train_model(
 def compute_ii_loss(out_z, labels, num_classes):
     intra_spread = torch.Tensor([0])
     inter_separation = torch.inf
-    class_mean = bucket_mean(out_z, labels) #TODO questo è il k dell embedding
+    class_mean = bucket_mean(out_z, labels) 
     for j in range(num_classes):
         data_class = out_z[labels == j]
         difference_from_mean = data_class - class_mean[j]

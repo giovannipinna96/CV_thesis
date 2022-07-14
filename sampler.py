@@ -58,7 +58,7 @@ class MultilabelBalancedRandomSampler(Sampler):
         self.count += 1
         return self.sample()
 
-    def sample(self):
+    def sample(self): #TODO mettere shuffle
         class_ = self.get_class()
         class_indices = self.class_indices[class_]
         chosen_index = np.random.choice(class_indices)
