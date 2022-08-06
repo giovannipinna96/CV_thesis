@@ -73,7 +73,7 @@ if __name__ == "__main__":
                                                                     transform_test,
                                                                     allParams.get_batch_size_train(),
                                                                     allParams.get_batch_size_test(),
-                                                                    balance=False
+                                                                    balance=True
                                                                     )     
     else:
         trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),

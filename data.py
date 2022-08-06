@@ -92,6 +92,8 @@ def _get_balance_data_loaders(dataset, batch_size, shuffle, num_workers, **kwarg
     loader = DataLoader(dataset, batch_size=batch_size, sampler=sampler,
                         num_workers=num_workers, **kwargs)
 
+    return loader
+
 def get_dataloaders(
     root_train, root_test, transform_train, transform_test, batch_size_train, batch_size_test, balance, **kwargs
 ):

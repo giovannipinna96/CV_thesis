@@ -216,7 +216,7 @@ def train_epoch_iiloss(
     
     print('Compute threshold')
     threshold = compute_threshold(model=model, dataloder=dataloader, num_classes=num_classes, device=device)
-    
+
     return ii_save_values, ce_save_values, threshold
 
 
@@ -228,12 +228,12 @@ def compute_embeddings(model, dataloader, device):
         for X, y in tqdm(dataloader):
             X = X.to(device)
             y = y.to(device)
-            labels.append(y)
             out_z, _ = model(X)
+            labels.append(y)
             embeddings.append(out_z)
 
-    embedding = torch.stack(embeddings)
-    label = torch.stack(labels)
+    embedding = torch.cat(embeddings)
+    label = torch.cat(labels)
     mean = bucket_mean(embedding, label)
 
     return embedding, label, mean  
@@ -242,8 +242,8 @@ def compute_embeddings(model, dataloader, device):
 def compute_threshold(model, dataloder, num_classes, device):
     embedding, label, mean = compute_embeddings(model, dataloder, device)
     os = []
-    for j in range(num_classes):
-        os.append(min((mean[j] - embedding[j]).norm()**2)) #TODO iterare sugli embedding non sulle classi
+    for j in range(embedding.shape[0]):
+        os.append(((mean - embedding[j]).norm()**2).min()) #TODO iterare sugli embedding non sulle classi
     os.sort()
     threshold = percentile(os, 1)
 
