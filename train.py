@@ -2,7 +2,7 @@ from cProfile import label
 import imp
 from tkinter.messagebox import NO
 from xml.dom.expatbuilder import theDOMImplementation
-from cv2 import norm, threshold
+from cv2 import norm
 from numpy import diff, percentile
 import torch
 import torchvision

@@ -13,6 +13,7 @@ import os
 from torch import Tensor
 import utils
 from tqdm import tqdm
+from numpy import argmax
 
 def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int = 1):
     '''
@@ -165,7 +166,7 @@ def train_epoch_iiloss(
         step += 1
     
     print('Compute threshold')
-    threshold = compute_threshold(model, dataloader, num_classes, device)
+    threshold = compute_threshold(model, dataloader, num_classes, device) #TODO non va qua, ma dove va?
 
     return ii_save_values, ce_save_values, threshold
 
@@ -197,7 +198,6 @@ def compute_threshold(model, dataloder, num_classes, device):
     os.sort()
     threshold = percentile(os, 1)
     
-
     return threshold
 
 def compute_ii_loss(out_z, labels, num_classes):
@@ -221,7 +221,48 @@ def bucket_mean(embeddings, labels, num_classes):
 
     return tot/count
 
+def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=None, device=None, threshold = None):
+    step = 0
+    # create an AverageMeter for the loss if passed
+    if loss_fn is not None:
+        loss_meter = AverageMeter()
 
+    if device is None:
+        device = utils.use_gpu_if_possible()
+
+    model = model.to(device)
+    performance_meter = AverageMeter()
+    model.eval()
+    save_values_test = []
+    with torch.no_grad():
+        for X, y in tqdm(dataloader):
+            X = X.to(device)
+            y = y.to(device)
+            out_z, out_y = model(X)
+
+            if torch.mode((out_z >= threshold), 0): 
+                y_hat = argmax(out_y)
+            else:
+                y_hat = -1 # not_classificable
+            
+            loss = loss_fn(y_hat, y) if loss_fn is not None else None
+            acc = performance(y_hat, y)
+            if loss_fn is not None:
+                loss_meter.update(loss.item(), X.shape[0])
+            performance_meter.update(acc, X.shape[0])
+
+            # save loss and accurancy
+            save_values_test.append(loss_meter.avg)
+            save_values_test.append(performance_meter.avg)
+            step += 1
+
+    # get final performances
+    fin_loss = loss_meter.sum if loss_fn is not None else None
+    fin_perf = performance_meter.avg
+    print(f"TESTING - loss {fin_loss if fin_loss is not None else '--'} - performance {fin_perf:.4f}")
+    
+    utils.save_obj(file_name="save_values_test", first=save_values_test)
+    return fin_loss, fin_perf
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -302,6 +343,14 @@ if __name__ == "__main__":
                       loss_type=allParams.get_loss_type(),
                       num_classes=num_classes
                       )
+
+    print('Start Test ii loss')
+    test.test_model_iiloss(net,
+                        testloader,
+                        loss_fn=loss_fn,
+                        device=allParams.get_device(),
+                        threshold=threshold
+                        )
     
     
 

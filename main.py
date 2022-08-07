@@ -118,7 +118,7 @@ if __name__ == "__main__":
     # set optimizer
     if allParams.optimizer.lower() == "sgd":
         optimizer = torch.optim.SGD(net.parameters(),
-                                    lr=.01,
+                                    lr=.0001,
                                     momentum=.9,
                                     weight_decay=5e-4
                                     )
