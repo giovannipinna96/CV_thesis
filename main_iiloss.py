@@ -353,6 +353,13 @@ if __name__ == "__main__":
                         device=allParams.get_device(),
                         threshold=threshold
                         )
+
+    # save network weights #TODO check save best 
+    print('Saving weights...')
+    os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
+                exist_ok=True
+                )
+    torch.save(net.state_dict(), allParams.get_weights_save_path())
     
     
 
