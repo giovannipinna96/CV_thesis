@@ -73,7 +73,7 @@ if __name__ == "__main__":
                                                                     transform_test,
                                                                     allParams.get_batch_size_train(),
                                                                     allParams.get_batch_size_test(),
-                                                                    balance=False
+                                                                    balance=True
                                                                     )     
     else:
         trainloader, testloader, trainset, testset = data.get_dataloaders(allParams.get_root_train(),
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     # set optimizer
     if allParams.optimizer.lower() == "sgd":
         optimizer = torch.optim.SGD(net.parameters(),
-                                    lr=.01,
+                                    lr=.0001,
                                     momentum=.9,
                                     weight_decay=5e-4
                                     )

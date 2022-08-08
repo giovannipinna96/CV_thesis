@@ -83,30 +83,22 @@ def _get_dataloader(dataset, batch_size, shuffle, num_workers, **kwargs):
 def _get_balance_data_loaders(dataset, batch_size, shuffle, num_workers, **kwargs):
     # Split into training and test
     indices = list(range(len(dataset)))
-    if shuffle:
-        np.random.shuffle(indices)
-    #split = int(np.floor(test_size * len(dataset)))
-    #train_idx, test_idx = indices[split:], indices[:split]
     one_hot_labels = torch.nn.functional.one_hot(torch.Tensor(dataset.targets).to(torch.int64))
 
     sampler = MultilabelBalancedRandomSampler(
         one_hot_labels, indices, class_choice="least_sampled"
     )
-    #test_sampler = SubsetRandomSampler(test_idx)
-
     # Create data loaders
     loader = DataLoader(dataset, batch_size=batch_size, sampler=sampler,
                         num_workers=num_workers, **kwargs)
-    #test_loader = DataLoader(dataset, batch_size=batch_size, sampler=test_sampler, shuffle=shuffle, num_workers=num_workers, **kwargs)
-    return loader #, test_loader
+
+    return loader
 
 def get_dataloaders(
     root_train, root_test, transform_train, transform_test, batch_size_train, batch_size_test, balance, **kwargs
 ):
     trainset = _get_dataset(root_train, transform_train)
     testset = _get_dataset(root_test, transform_test)
-    # TODO
-    # Aggiunto sampler al dataloader ma fa lo shuffle in quromatico??
     if not balance:
         trainloader = _get_dataloader(trainset, batch_size_train, shuffle=True, num_workers=8, **kwargs)
         testloader = _get_dataloader(testset, batch_size_test, shuffle=False, num_workers=8, **kwargs)

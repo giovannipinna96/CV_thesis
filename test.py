@@ -93,7 +93,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             y = y.to(device)
             out_z, out_y = model(X)
 
-            if torch.mode((out_z >= threshold), 0):  #TODO how to compare??
+            if torch.mode((out_z >= threshold), 0): #TODO how to compare
                 y_hat = argmax(out_y)
             else:
                 y_hat = -1 # not_classificable
