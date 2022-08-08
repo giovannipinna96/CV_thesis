@@ -70,6 +70,8 @@ def train_model(
         ce_performance_meter = AverageMeter()
         ii, ce, threshold = train_epoch_iiloss(model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
                         performance, device, lr_scheduler_batch, num_classes=num_classes)
+        #print('Compute threshold')
+        #threshold = compute_threshold(model, dataloader, num_classes, device)
 
         print(f"Epoch {epoch+1} completed. Loss - total: {loss_meter.sum:.4f} - average: {loss_meter.avg:.4f}; Performance: {performance_meter.avg:.4f}")
 
