@@ -68,11 +68,9 @@ def train_model(
         ii_performance_meter = AverageMeter()
         ce_loss_meter = AverageMeter()
         ce_performance_meter = AverageMeter()
-        ii, ce, threshold = train_epoch_iiloss(model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
+        ii, ce = train_epoch_iiloss(model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
                         performance, device, lr_scheduler_batch, num_classes=num_classes)
-        #print('Compute threshold')
-        #threshold = compute_threshold(model, dataloader, num_classes, device)
-
+        
         print(f"Epoch {epoch+1} completed. Loss - total: {loss_meter.sum:.4f} - average: {loss_meter.avg:.4f}; Performance: {performance_meter.avg:.4f}")
 
         # produce checkpoint dictionary -- but only if the name and folder of the checkpoint are not None
@@ -95,11 +93,15 @@ def train_model(
             else:
                 lr_scheduler.step()
     utils.save_obj(file_name="save_value_train", first= save_values_train)
+    
+    print('Compute threshold')
+    threshold, mean = compute_threshold(model, dataloader, num_classes, device)
+
 
     if threshold is None:
         return loss_meter.sum, performance_meter.avg
     else:
-        return loss_meter.sum, performance_meter.avg, threshold
+        return loss_meter.sum, performance_meter.avg, threshold, mean
 
 class AverageMeter(object):
     '''
@@ -167,10 +169,7 @@ def train_epoch_iiloss(
         ce_save_values.append(ce_performance_meter.avg)
         step += 1
     
-    print('Compute threshold')
-    threshold = compute_threshold(model, dataloader, num_classes, device) #TODO non va qua, ma dove va?
-
-    return ii_save_values, ce_save_values, threshold
+    return ii_save_values, ce_save_values
 
 
 def compute_embeddings(model, dataloader, num_classes, device):
@@ -194,13 +193,13 @@ def compute_embeddings(model, dataloader, num_classes, device):
 
 def compute_threshold(model, dataloder, num_classes, device):
     embedding, label, mean = compute_embeddings(model, dataloder, num_classes, device)
-    os = []
+    outlayer_score = []
     for j in range(embedding.shape[0]):
-        os.append(((mean - embedding[j]).norm(dim=0)**2).min()) #TODO iterare sugli embedding non sulle classi
-    os.sort()
+        outlayer_score.append(((mean - embedding[j]).norm(dim=0)**2).min()) 
+    outlayer_score.sort()
     threshold = percentile(os, 1)
     
-    return threshold
+    return threshold, mean
 
 def compute_ii_loss(out_z, labels, num_classes):
     intra_spread = torch.Tensor([0])
@@ -335,7 +334,7 @@ if __name__ == "__main__":
 
     # train
     print('Start Train')
-    _, _, threshold = train_model(net,
+    _, _, threshold, mean = train_model(net,
                       trainloader,
                       loss_fn,
                       optimizer,
@@ -351,7 +350,8 @@ if __name__ == "__main__":
                         testloader,
                         loss_fn=loss_fn,
                         device=allParams.get_device(),
-                        threshold=threshold
+                        threshold=threshold,
+                        mean = mean
                         )
 
     # save network weights #TODO check save best 

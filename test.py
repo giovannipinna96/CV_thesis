@@ -74,7 +74,7 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
     return fin_loss, fin_perf
 
 
-def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=None, device=None, threshold = None):
+def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=None, device=None, threshold = None, mean = None):
     step = 0
     # create an AverageMeter for the loss if passed
     if loss_fn is not None:
@@ -93,7 +93,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             y = y.to(device)
             out_z, out_y = model(X)
 
-            if torch.mode((out_z >= threshold), 0): #TODO how to compare
+            if (((mean - out_z).norm(dim=0)**2).min() >= threshold):
                 y_hat = argmax(out_y)
             else:
                 y_hat = -1 # not_classificable
