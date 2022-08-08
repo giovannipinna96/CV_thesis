@@ -93,7 +93,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             y = y.to(device)
             out_z, out_y = model(X)
 
-            if (((mean - out_z).norm(dim=0)**2).min() >= threshold):
+            if (((mean - out_z).norm(dim=0)**2).min() >= threshold): #TODO attenzione che non è una sola immagine ma è un batch di 128
                 y_hat = argmax(out_y)
             else:
                 y_hat = -1 # not_classificable

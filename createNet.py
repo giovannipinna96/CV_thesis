@@ -59,6 +59,9 @@ def _not_freeze(net, layers: list):
 
     return net
 
+def create_dict_resNet50Costum():
+    pass
+
 class resNet50Costum(torchvision.models.resnet.ResNet): #TODO come mettere pesi imagenet???
     def __init__(self, num_classes):
         super(resNet50Costum, self).__init__(torchvision.models.resnet.BasicBlock, [3, 4, 6, 3], num_classes=num_classes)
