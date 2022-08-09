@@ -197,7 +197,7 @@ def compute_threshold(model, dataloder, num_classes, device):
     for j in range(embedding.shape[0]):
         outlayer_score.append(((mean - embedding[j]).norm(dim=0)**2).min()) 
     outlayer_score.sort()
-    threshold = percentile(os, 1)
+    threshold = percentile(outlayer_score, 1)
     
     return threshold, mean
 
@@ -315,6 +315,8 @@ if __name__ == "__main__":
     num_classes = len(trainset.classes)
     loss_fn = torch.nn.CrossEntropyLoss()
     net = createNet.resNet50Costum(num_classes)
+    dict_custom_resnet50, classic = createNet.create_dict_resNet50Costum(net, "resnet50_aug_per_giovanni.pt_resnet50.pt")
+    net.load_state_dict(dict_custom_resnet50)
     if allParams.optimizer.lower() == "sgd":
         optimizer = torch.optim.SGD(net.parameters(),
                                     lr=.0001,
