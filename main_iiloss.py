@@ -242,7 +242,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             out_z, out_y = model(X)
             y_hat = []
             for j in range(out_z.shape[0]):
-                if (((mean - out_z[j]).norm(dim=0)**2).min() >= threshold): #TODO attenzione che non è una sola immagine ma è un batch di 128
+                if (((mean - out_z[j]).norm(dim=0)**2).min() >= threshold):
                     y_hat.append(argmax(out_y[j]))
                 else:
                     y_hat.append(torch.tensor(-1)) # not_classificable
@@ -349,7 +349,7 @@ if __name__ == "__main__":
                       )
 
     print('Start Test ii loss')
-    test.test_model_iiloss(net,
+    test_model_iiloss(net,
                         testloader,
                         loss_fn=loss_fn,
                         device=allParams.get_device(),
@@ -357,7 +357,6 @@ if __name__ == "__main__":
                         mean = mean
                         )
 
-    # save network weights #TODO check save best 
     print('Saving weights...')
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
                 exist_ok=True
