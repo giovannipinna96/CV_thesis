@@ -92,14 +92,15 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             X = X.to(device)
             y = y.to(device)
             out_z, out_y = model(X)
-
-            if (((mean - out_z).norm(dim=0)**2).min() >= threshold): #TODO attenzione che non è una sola immagine ma è un batch di 128
-                y_hat = argmax(out_y)
-            else:
-                y_hat = -1 # not_classificable
+            y_hat = []
+            for j in range(out_z.shape[0]):
+                if (((mean - out_z[j]).norm(dim=0)**2).min() >= threshold): #TODO attenzione che non è una sola immagine ma è un batch di 128
+                    y_hat.append(argmax(out_y[j]))
+                else:
+                    y_hat.append(torch.tensor(-1)) # not_classificable
             
-            loss = loss_fn(y_hat, y) if loss_fn is not None else None
-            acc = performance(y_hat, y)
+            loss = loss_fn(out_y, y) if loss_fn is not None else None
+            acc = performance(out_y, y)
             if loss_fn is not None:
                 loss_meter.update(loss.item(), X.shape[0])
             performance_meter.update(acc, X.shape[0])
