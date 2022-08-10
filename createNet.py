@@ -15,17 +15,17 @@ def create_network(model: str, pretrained : bool =True, not_freeze=None):
     Returns:
         torchvision.models: returns the network that is present in torchvision without (avgpool) and the (fc) and with all layer freezed. 
     """
-    match model:
-        case 'resnet50':
-            net = torchvision.models.resnet50(pretrained=pretrained)
-        case 'resnet18':
-            net = torchvision.models.resnet18(pretrained=pretrained)
-        case 'resnet101':
-            net = torchvision.models.resnet101(pretrained=pretrained)
-        case 'vgg16':
-            net = torchvision.models.vgg16(pretrained=pretrained)
+#    match model:
+#        case 'resnet50':
+#            net = torchvision.models.resnet50(pretrained=pretrained)
+#        case 'resnet18':
+#            net = torchvision.models.resnet18(pretrained=pretrained)
+#        case 'resnet101':
+#            net = torchvision.models.resnet101(pretrained=pretrained)
+#        case 'vgg16':
+#            net = torchvision.models.vgg16(pretrained=pretrained)
 
-    return _not_freeze(_freeze_all(net), not_freeze)
+#    return _not_freeze(_freeze_all(net), not_freeze)
 
 
 def _freeze_all(net):
