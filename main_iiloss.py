@@ -30,7 +30,7 @@ def not_freeze(net, layers: list):
 
     # freeze layers
     for name, param in net.named_parameters():
-        if layers in name:
+        if name in layers:
             param.requires_grad = True
 
     return net
@@ -340,7 +340,15 @@ if __name__ == "__main__":
     net = createNet.resNet50Costum(num_classes)
     dict_custom_resnet50, classic = createNet.create_dict_resNet50Costum(net, "resnet50_aug_per_giovanni.pt_resnet50.pt")
     net.load_state_dict(dict_custom_resnet50)
-    net = not_freeze(net, ['layer4', 'fc1', 'fc2'])
+    net = not_freeze(net, ['layer4.0.conv1.weight', 'layer4.0.bn1.weight', 'layer4.0.bn1.bias',
+    'layer4.0.conv2.weight', 'layer4.0.bn2.weight', 'layer4.0.bn2.bias', 'layer4.0.conv3.weight',
+    'layer4.0.bn3.weight', 'layer4.0.bn3.bias', 'layer4.0.downsample.0.weight',
+    'layer4.0.downsample.1.weight', 'layer4.0.downsample.1.bias', 'layer4.1.conv1.weight',
+    'layer4.1.bn1.weight', 'layer4.1.bn1.bias', 'layer4.1.conv2.weight', 'layer4.1.bn2.weight',
+    'layer4.1.bn2.bias', 'layer4.1.conv3.weight', 'layer4.1.bn3.weight', 'layer4.1.bn3.bias',
+    'layer4.2.conv1.weight', 'layer4.2.bn1.weight', 'layer4.2.bn1.bias', 'layer4.2.conv2.weight',
+    'layer4.2.bn2.weight', 'layer4.2.bn2.bias', 'layer4.2.conv3.weight', 'layer4.2.bn3.weight',
+    'layer4.2.bn3.bias', 'fc1.weight', 'fc1.bias', 'fc2.weight', 'fc2.bias'])
     if allParams.optimizer.lower() == "sgd":
         optimizer = torch.optim.SGD(net.parameters(),
                                     lr=.0001,
