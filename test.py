@@ -74,7 +74,7 @@ def test_model(model, dataloader, performance=train.accuracy, loss_fn=None, devi
     return fin_loss, fin_perf
 
 
-def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=None, device=None, threshold = None):
+def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=None, device=None, threshold = None, mean = None):
     step = 0
     # create an AverageMeter for the loss if passed
     if loss_fn is not None:
@@ -92,14 +92,15 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             X = X.to(device)
             y = y.to(device)
             out_z, out_y = model(X)
-
-            if torch.mode((out_z >= threshold), 0): #TODO how to compare
-                y_hat = argmax(out_y)
-            else:
-                y_hat = -1 # not_classificable
+            y_hat = []
+            for j in range(out_z.shape[0]):
+                if (((mean - out_z[j]).norm(dim=0)**2).min() >= threshold): #TODO attenzione che non è una sola immagine ma è un batch di 128
+                    y_hat.append(argmax(out_y[j]))
+                else:
+                    y_hat.append(torch.tensor(-1)) # not_classificable
             
-            loss = loss_fn(y_hat, y) if loss_fn is not None else None
-            acc = performance(y_hat, y)
+            loss = loss_fn(out_y, y) if loss_fn is not None else None
+            acc = performance(out_y, y)
             if loss_fn is not None:
                 loss_meter.update(loss.item(), X.shape[0])
             performance_meter.update(acc, X.shape[0])

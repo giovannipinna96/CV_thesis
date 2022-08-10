@@ -243,7 +243,7 @@ def compute_threshold(model, dataloder, num_classes, device):
     embedding, label, mean = compute_embeddings(model, dataloder, device)
     os = []
     for j in range(embedding.shape[0]):
-        os.append(((mean - embedding[j]).norm()**2).min()) #TODO iterare sugli embedding non sulle classi
+        os.append(((mean - embedding[j]).norm()**2).min())
     os.sort()
     threshold = percentile(os, 1)
 

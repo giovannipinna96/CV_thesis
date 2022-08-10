@@ -68,11 +68,9 @@ def train_model(
         ii_performance_meter = AverageMeter()
         ce_loss_meter = AverageMeter()
         ce_performance_meter = AverageMeter()
-        ii, ce, threshold = train_epoch_iiloss(model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
+        ii, ce = train_epoch_iiloss(model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
                         performance, device, lr_scheduler_batch, num_classes=num_classes)
-        #print('Compute threshold')
-        #threshold = compute_threshold(model, dataloader, num_classes, device)
-
+        
         print(f"Epoch {epoch+1} completed. Loss - total: {loss_meter.sum:.4f} - average: {loss_meter.avg:.4f}; Performance: {performance_meter.avg:.4f}")
 
         # produce checkpoint dictionary -- but only if the name and folder of the checkpoint are not None
@@ -95,11 +93,15 @@ def train_model(
             else:
                 lr_scheduler.step()
     utils.save_obj(file_name="save_value_train", first= save_values_train)
+    
+    print('Compute threshold')
+    threshold, mean = compute_threshold(model, dataloader, num_classes, device)
+
 
     if threshold is None:
         return loss_meter.sum, performance_meter.avg
     else:
-        return loss_meter.sum, performance_meter.avg, threshold
+        return loss_meter.sum, performance_meter.avg, threshold, mean
 
 class AverageMeter(object):
     '''
@@ -167,10 +169,7 @@ def train_epoch_iiloss(
         ce_save_values.append(ce_performance_meter.avg)
         step += 1
     
-    print('Compute threshold')
-    threshold = compute_threshold(model, dataloader, num_classes, device) #TODO non va qua, ma dove va?
-
-    return ii_save_values, ce_save_values, threshold
+    return ii_save_values, ce_save_values
 
 
 def compute_embeddings(model, dataloader, num_classes, device):
@@ -194,13 +193,13 @@ def compute_embeddings(model, dataloader, num_classes, device):
 
 def compute_threshold(model, dataloder, num_classes, device):
     embedding, label, mean = compute_embeddings(model, dataloder, num_classes, device)
-    os = []
+    outlayer_score = []
     for j in range(embedding.shape[0]):
-        os.append(((mean - embedding[j]).norm(dim=0)**2).min()) #TODO iterare sugli embedding non sulle classi
-    os.sort()
-    threshold = percentile(os, 1)
+        outlayer_score.append(((mean - embedding[j]).norm(dim=0)**2).min()) 
+    outlayer_score.sort()
+    threshold = percentile(outlayer_score, 1)
     
-    return threshold
+    return threshold, mean
 
 def compute_ii_loss(out_z, labels, num_classes):
     intra_spread = torch.Tensor([0])
@@ -223,7 +222,7 @@ def bucket_mean(embeddings, labels, num_classes):
 
     return tot/count
 
-def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=None, device=None, threshold = None):
+def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=None, device=None, threshold = None, mean = None):
     step = 0
     # create an AverageMeter for the loss if passed
     if loss_fn is not None:
@@ -241,14 +240,15 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             X = X.to(device)
             y = y.to(device)
             out_z, out_y = model(X)
-
-            if torch.mode((out_z >= threshold), 0): 
-                y_hat = argmax(out_y)
-            else:
-                y_hat = -1 # not_classificable
+            y_hat = []
+            for j in range(out_z.shape[0]):
+                if (((mean - out_z[j]).norm(dim=0)**2).min() >= threshold):
+                    y_hat.append(argmax(out_y[j]))
+                else:
+                    y_hat.append(torch.tensor(-1)) # not_classificable
             
-            loss = loss_fn(y_hat, y) if loss_fn is not None else None
-            acc = performance(y_hat, y)
+            loss = loss_fn(out_y, y) if loss_fn is not None else None
+            acc = performance(out_y, y)
             if loss_fn is not None:
                 loss_meter.update(loss.item(), X.shape[0])
             performance_meter.update(acc, X.shape[0])
@@ -268,7 +268,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", type=int, default=1)
+    parser.add_argument("--epochs", type=int, default=25)
     parser.add_argument("--root_train", type=str, default="ImageSet/train")
     parser.add_argument("--root_test", type=str, default="ImageSet/test")
     parser.add_argument("--loss_type", type=str, default="iiloss")
@@ -276,7 +276,7 @@ if __name__ == "__main__":
     parser.add_argument("--out_net", type=int, default=18)
     parser.add_argument("--is_feature_extraction", type=bool, default=True)
     parser.add_argument("--weights_save_path", type=str, default="models/model.pt")
-    parser.add_argument("--pickle_save_path", type=str, default="out")
+    parser.add_argument("--pickle_save_path", type=str, default="out_ii")
     parser.add_argument("--is_ml", type=bool, default=True)
     parser.add_argument("--temperature", type=float, default=0.1)
     parser.add_argument
@@ -316,6 +316,8 @@ if __name__ == "__main__":
     num_classes = len(trainset.classes)
     loss_fn = torch.nn.CrossEntropyLoss()
     net = createNet.resNet50Costum(num_classes)
+    dict_custom_resnet50, classic = createNet.create_dict_resNet50Costum(net, "resnet50_aug_per_giovanni.pt_resnet50.pt")
+    net.load_state_dict(dict_custom_resnet50)
     if allParams.optimizer.lower() == "sgd":
         optimizer = torch.optim.SGD(net.parameters(),
                                     lr=.0001,
@@ -335,7 +337,7 @@ if __name__ == "__main__":
 
     # train
     print('Start Train')
-    _, _, threshold = train_model(net,
+    _, _, threshold, mean = train_model(net,
                       trainloader,
                       loss_fn,
                       optimizer,
@@ -347,20 +349,24 @@ if __name__ == "__main__":
                       )
 
     print('Start Test ii loss')
-    test.test_model_iiloss(net,
+    test_model_iiloss(net,
                         testloader,
                         loss_fn=loss_fn,
                         device=allParams.get_device(),
-                        threshold=threshold
+                        threshold=threshold,
+                        mean = mean
                         )
 
-    # save network weights #TODO check save best 
     print('Saving weights...')
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
                 exist_ok=True
                 )
     torch.save(net.state_dict(), allParams.get_weights_save_path())
     
-    
+    print('Saving pickle')
+    utils.save_obj(file_name=f"./{args.pickle_save_path}/pickle_thres_mean",
+                        first=threshold,
+                        second=mean
+                        )
 
 print('Finish')

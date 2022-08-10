@@ -1,6 +1,7 @@
 from numpy import block
 import torchvision
 import torch.nn as nn
+import torch
 
 
 def create_network(model: str, pretrained : bool =True, not_freeze=None):
@@ -59,11 +60,28 @@ def _not_freeze(net, layers: list):
 
     return net
 
-class resNet50Costum(torchvision.models.resnet.ResNet): #TODO come mettere pesi imagenet???
+def create_dict_resNet50Costum(net, name_file):
+    ditc_resnet50custom = {}
+    classic_net = torchvision.models.resnet50()
+    classic_net.fc = torch.nn.Linear(in_features=2048,
+                                    out_features=17,
+                                    bias=True
+                                    )
+    classic_net.load_state_dict(torch.load(name_file, map_location='cpu'))
+    for k1, v1 in classic_net.state_dict().items():
+        if k1 in net.state_dict().keys():
+            ditc_resnet50custom[k1] = v1
+    for k2, v2 in net.state_dict().items():
+        if k2 not in ditc_resnet50custom.keys():
+            ditc_resnet50custom[k2] = v2
+
+    return ditc_resnet50custom, classic_net
+
+class resNet50Costum(torchvision.models.resnet.ResNet): 
     def __init__(self, num_classes):
-        super(resNet50Costum, self).__init__(torchvision.models.resnet.BasicBlock, [3, 4, 6, 3], num_classes=num_classes)
+        super(resNet50Costum, self).__init__(torchvision.models.resnet.Bottleneck, [3, 4, 6, 3], num_classes=num_classes)
         del self.fc
-        self.fc1 = nn.Linear(512, 32)
+        self.fc1 = nn.Linear(2048, 32)
         self.fc2 = nn.Linear(32, num_classes)
 
     def forward(self, x):
