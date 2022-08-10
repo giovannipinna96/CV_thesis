@@ -202,8 +202,8 @@ def compute_threshold(model, dataloder, num_classes, device):
     return threshold, mean
 
 def compute_ii_loss(out_z, labels, num_classes):
-    intra_spread = torch.Tensor([0])
-    inter_separation = torch.inf
+    intra_spread = torch.Tensor([0], device=torch.device('cuda'))
+    inter_separation = torch.inf.cuda()
     class_mean = bucket_mean(out_z, labels, num_classes) 
     for j in range(num_classes):
         data_class = out_z[labels == j]
