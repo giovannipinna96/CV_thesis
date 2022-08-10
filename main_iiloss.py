@@ -15,6 +15,26 @@ import utils
 from tqdm import tqdm
 from numpy import argmax
 
+def not_freeze(net, layers: list):
+    """Defrost layers.
+
+    Args:
+        net (torchvision.models): The network.
+        layers (list): list of layers to defrost
+
+    Returns:
+        torchvision.models: The network with defrost layer in list layers.
+    """
+    for _, param in net.named_parameters():
+        param.requires_grad = False
+
+    # freeze layers
+    for name, param in net.named_parameters():
+        if layers in name:
+            param.requires_grad = True
+
+    return net
+
 def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int = 1):
     '''
     Return accuracy@k for the given model output and ground truth
@@ -320,6 +340,7 @@ if __name__ == "__main__":
     net = createNet.resNet50Costum(num_classes)
     dict_custom_resnet50, classic = createNet.create_dict_resNet50Costum(net, "resnet50_aug_per_giovanni.pt_resnet50.pt")
     net.load_state_dict(dict_custom_resnet50)
+    net = not_freeze(net, ['layer4', 'fc1', 'fc2'])
     if allParams.optimizer.lower() == "sgd":
         optimizer = torch.optim.SGD(net.parameters(),
                                     lr=.0001,
