@@ -268,7 +268,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", type=int, default=1)
+    parser.add_argument("--epochs", type=int, default=25)
     parser.add_argument("--root_train", type=str, default="ImageSet/train")
     parser.add_argument("--root_test", type=str, default="ImageSet/test")
     parser.add_argument("--loss_type", type=str, default="iiloss")
@@ -276,7 +276,7 @@ if __name__ == "__main__":
     parser.add_argument("--out_net", type=int, default=18)
     parser.add_argument("--is_feature_extraction", type=bool, default=True)
     parser.add_argument("--weights_save_path", type=str, default="models/model.pt")
-    parser.add_argument("--pickle_save_path", type=str, default="out")
+    parser.add_argument("--pickle_save_path", type=str, default="out_ii")
     parser.add_argument("--is_ml", type=bool, default=True)
     parser.add_argument("--temperature", type=float, default=0.1)
     parser.add_argument
@@ -363,6 +363,10 @@ if __name__ == "__main__":
                 )
     torch.save(net.state_dict(), allParams.get_weights_save_path())
     
-    
+    print('Saving pickle')
+    utils.save_obj(file_name=f"./{args.pickle_save_path}/pickle_thres_mean",
+                        first=threshold,
+                        second=mean
+                        )
 
 print('Finish')
