@@ -145,11 +145,11 @@ def train_epoch_iiloss(
         # 4. execute the backward pass given the current loss
         ii_loss.backward(retain_graph = True)
         # 5. calculate the iiloss on the current mini-batch
-        if not (step % 2):
-            ce_loss = loss_fn(out_y, y)
-        #ce_loss = loss_fn(out_y, y)
+        #if step % 2 :
+        #    ce_loss = loss_fn(out_y, y)
+        ce_loss = loss_fn(out_y, y)
         # 6. execute the backward pass given the current loss
-            ce_loss.backward()
+        ce_loss.backward()
         # 7. update the value of the params
         optimizer.step()
         if lr_scheduler is not None:
