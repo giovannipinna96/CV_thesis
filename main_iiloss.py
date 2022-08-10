@@ -366,7 +366,7 @@ if __name__ == "__main__":
     torch.save(net.state_dict(), allParams.get_weights_save_path())
     
     print('Saving pickle')
-    utils.save_obj(file_name=f"./{args.pickle_save_path}/pickle_thres_mean",
+    utils.save_obj(file_name=f"./pickle_thres_mean",
                         first=threshold,
                         second=mean
                         )
