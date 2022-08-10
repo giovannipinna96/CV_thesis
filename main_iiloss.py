@@ -163,7 +163,8 @@ def train_epoch_iiloss(
         # 3. calculate the iiloss on the current mini-batch
         ii_loss = compute_ii_loss(out_z, y, num_classes) 
         # 4. execute the backward pass given the current loss
-        ii_loss.backward(retain_graph = True)
+        if not (step % 2):
+            ii_loss.backward(retain_graph = True)
         # 5. calculate the iiloss on the current mini-batch
         #if step % 2 :
         #    ce_loss = loss_fn(out_y, y)
@@ -297,7 +298,7 @@ if __name__ == "__main__":
     parser.add_argument("--optimizer", type=str, default="sgd")
     parser.add_argument("--out_net", type=int, default=18)
     parser.add_argument("--is_feature_extraction", type=bool, default=True)
-    parser.add_argument("--weights_save_path", type=str, default="models/model_freeze.pt")
+    parser.add_argument("--weights_save_path", type=str, default="models/model_alte.pt")
     parser.add_argument("--pickle_save_path", type=str, default="out_ii")
     parser.add_argument("--is_ml", type=bool, default=True)
     parser.add_argument("--temperature", type=float, default=0.1)
@@ -340,15 +341,15 @@ if __name__ == "__main__":
     net = createNet.resNet50Costum(num_classes)
     dict_custom_resnet50, classic = createNet.create_dict_resNet50Costum(net, "resnet50_aug_per_giovanni.pt_resnet50.pt")
     net.load_state_dict(dict_custom_resnet50)
-    net = not_freeze(net, ['layer4.0.conv1.weight', 'layer4.0.bn1.weight', 'layer4.0.bn1.bias',
-    'layer4.0.conv2.weight', 'layer4.0.bn2.weight', 'layer4.0.bn2.bias', 'layer4.0.conv3.weight',
-    'layer4.0.bn3.weight', 'layer4.0.bn3.bias', 'layer4.0.downsample.0.weight',
-    'layer4.0.downsample.1.weight', 'layer4.0.downsample.1.bias', 'layer4.1.conv1.weight',
-    'layer4.1.bn1.weight', 'layer4.1.bn1.bias', 'layer4.1.conv2.weight', 'layer4.1.bn2.weight',
-    'layer4.1.bn2.bias', 'layer4.1.conv3.weight', 'layer4.1.bn3.weight', 'layer4.1.bn3.bias',
-    'layer4.2.conv1.weight', 'layer4.2.bn1.weight', 'layer4.2.bn1.bias', 'layer4.2.conv2.weight',
-    'layer4.2.bn2.weight', 'layer4.2.bn2.bias', 'layer4.2.conv3.weight', 'layer4.2.bn3.weight',
-    'layer4.2.bn3.bias', 'fc1.weight', 'fc1.bias', 'fc2.weight', 'fc2.bias'])
+    #net = not_freeze(net, ['layer4.0.conv1.weight', 'layer4.0.bn1.weight', 'layer4.0.bn1.bias',
+    #'layer4.0.conv2.weight', 'layer4.0.bn2.weight', 'layer4.0.bn2.bias', 'layer4.0.conv3.weight',
+    #'layer4.0.bn3.weight', 'layer4.0.bn3.bias', 'layer4.0.downsample.0.weight',
+    #'layer4.0.downsample.1.weight', 'layer4.0.downsample.1.bias', 'layer4.1.conv1.weight',
+    #'layer4.1.bn1.weight', 'layer4.1.bn1.bias', 'layer4.1.conv2.weight', 'layer4.1.bn2.weight',
+    #'layer4.1.bn2.bias', 'layer4.1.conv3.weight', 'layer4.1.bn3.weight', 'layer4.1.bn3.bias',
+    #'layer4.2.conv1.weight', 'layer4.2.bn1.weight', 'layer4.2.bn1.bias', 'layer4.2.conv2.weight',
+    #'layer4.2.bn2.weight', 'layer4.2.bn2.bias', 'layer4.2.conv3.weight', 'layer4.2.bn3.weight',
+    #'layer4.2.bn3.bias', 'fc1.weight', 'fc1.bias', 'fc2.weight', 'fc2.bias'])
     if allParams.optimizer.lower() == "sgd":
         optimizer = torch.optim.SGD(net.parameters(),
                                     lr=.0001,
@@ -395,7 +396,7 @@ if __name__ == "__main__":
     torch.save(net.state_dict(), allParams.get_weights_save_path())
     
     print('Saving pickle')
-    utils.save_obj(file_name=f"./pickle_thres_mean_freeze",
+    utils.save_obj(file_name=f"./pickle_thres_mean_alte",
                         first=threshold,
                         second=mean
                         )
