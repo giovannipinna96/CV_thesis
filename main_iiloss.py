@@ -145,8 +145,9 @@ def train_epoch_iiloss(
         # 4. execute the backward pass given the current loss
         ii_loss.backward(retain_graph = True)
         # 5. calculate the iiloss on the current mini-batch
-        if step % 2 :
-            ce_loss = loss_fn(out_y, y)
+        #if step % 2 :
+        #    ce_loss = loss_fn(out_y, y)
+        ce_loss = loss_fn(out_y, y)
         # 6. execute the backward pass given the current loss
         ce_loss.backward()
         # 7. update the value of the params
@@ -244,7 +245,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             y_hat = []
             for j in range(out_z.shape[0]):
                 if (((mean - out_z[j]).norm(dim=0)**2).min() >= threshold):
-                    y_hat.append(argmax(out_y[j]))
+                    y_hat.append(argmax(out_y[j].cpu()))
                 else:
                     y_hat.append(torch.tensor(-1)) # not_classificable
             
