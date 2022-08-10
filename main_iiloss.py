@@ -219,6 +219,9 @@ def compute_ii_loss(out_z, labels, num_classes):
 def bucket_mean(embeddings, labels, num_classes):
     tot = torch.zeros(num_classes, embeddings.shape[1]).index_add(0, labels, embeddings)
     count = torch.zeros(num_classes, embeddings.shape[1]).index_add(0, labels, torch.ones_like(embeddings))
+    if torch.cuda.is_available():
+        tot = tot.to("cuda:0")
+        count = count.to("cuda:0")
 
     return tot/count
 
