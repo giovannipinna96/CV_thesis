@@ -298,7 +298,7 @@ if __name__ == "__main__":
     parser.add_argument("--optimizer", type=str, default="sgd")
     parser.add_argument("--out_net", type=int, default=18)
     parser.add_argument("--is_feature_extraction", type=bool, default=True)
-    parser.add_argument("--weights_save_path", type=str, default="models/model.pt")
+    parser.add_argument("--weights_save_path", type=str, default="models/model_two.pt")
     parser.add_argument("--pickle_save_path", type=str, default="out_ii")
     parser.add_argument("--is_ml", type=bool, default=True)
     parser.add_argument("--temperature", type=float, default=0.1)
@@ -396,7 +396,7 @@ if __name__ == "__main__":
     torch.save(net.state_dict(), allParams.get_weights_save_path())
     
     print('Saving pickle')
-    utils.save_obj(file_name=f"./pickle_thres_mean",
+    utils.save_obj(file_name=f"./pickle_thres_mean_two",
                         first=threshold,
                         second=mean
                         )
