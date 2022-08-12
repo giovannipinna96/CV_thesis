@@ -356,6 +356,7 @@ if __name__ == "__main__":
                                                                     )
     extraloader, extraset = data.get_single_dataloader("ImageSet/extra",
                                                         transform_test,
+                                                        128,
                                                         balance=False
                                                         ) 
 
