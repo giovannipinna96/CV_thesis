@@ -211,7 +211,6 @@ def compute_ii_loss(out_z, labels, num_classes):
     device = out_z.device
     intra_spread = torch.Tensor([0]).to(device)
     inter_separation = torch.tensor([float('inf')]).to(device)
-    #inter_separation = torch.inf
     class_mean = bucket_mean(out_z, labels, num_classes) 
     for j in range(num_classes):
         data_class = out_z[labels == j]
@@ -220,8 +219,8 @@ def compute_ii_loss(out_z, labels, num_classes):
         intra_spread += norm_from_mean
         if j > 0:
             class_mean_previous = class_mean[:j]
-        norm_form_previous_means = (class_mean_previous - class_mean[j]).norm(dim=1)**2
-        inter_separation = min(inter_separation, norm_form_previous_means.min())
+            norm_form_previous_means = (class_mean_previous - class_mean[j]).norm(dim=1)**2
+            inter_separation = min(inter_separation, norm_form_previous_means.min())
 
     return intra_spread/n_datapoints - inter_separation
 
