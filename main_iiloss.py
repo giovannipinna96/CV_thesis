@@ -322,7 +322,7 @@ if __name__ == "__main__":
     parser.add_argument("--is_ml", type=bool, default=True)
     parser.add_argument("--temperature", type=float, default=0.1)
     parser.add_argument("--dim_latent", type=int, default=32)
-    parser.add_argument("--lr", type=float, default=.0001)
+    parser.add_argument("--lr", type=float, default=.001)
     parser.add_argument("--epochs_lr_decay", nargs="*", type=int, default=[10, 15])
     parser.add_argument
     args = parser.parse_args()
