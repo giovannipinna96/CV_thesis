@@ -290,13 +290,13 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
             out_z, out_y = model(X)
             for j in range(out_z.shape[0]):
                 if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
-                    y_hat.append(1)
+                    y_hat.append(0)
                 else:
-                    y_hat.append(0) # not_classificable
+                    y_hat.append(1) # not_classificable
 
             step += 1
 
-    print(f"TESTING on EXTRA - performance {(1 - np.mean(y_hat)):.4f}")
+    print(f"TESTING on EXTRA - performance {np.mean(y_hat):.4f}")
 
 
 if __name__ == "__main__":
