@@ -146,8 +146,8 @@ def train_epoch_iiloss(
         # 3. calculate the iiloss on the current mini-batch
         ii_loss = compute_ii_loss(out_z, y, num_classes) 
         # 4. execute the backward pass given the current loss
-        if not (step % 2):
-            ii_loss.backward(retain_graph = True)
+        #if not (step % 2):
+        ii_loss.backward(retain_graph = True)
         # 5. calculate the iiloss on the current mini-batch
         #if not (step % 2):
             #ce_loss = loss_fn(out_y, y)
@@ -260,7 +260,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             out_z, out_y = model(X)
             y_hat = []
             for j in range(out_z.shape[0]):
-                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold) or torch.nn.functional.softmax(out_y[j], dim=1).max() < 0.21:
+                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
                     y_hat.append(argmax(out_y[j].cpu()))
                 else:
                     y_hat.append(torch.tensor(-1)) # not_classificable
@@ -298,7 +298,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
             y = y.to(device)
             out_z, out_y = model(X)
             for j in range(out_z.shape[0]):
-                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold) or torch.nn.functional.softmax(out_y[j], dim=1).max() < 0.21:
+                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
                     y_hat.append(0)
                 else:
                     y_hat.append(1) # not_classificable
