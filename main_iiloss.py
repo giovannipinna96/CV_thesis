@@ -218,15 +218,17 @@ def compute_threshold(model, dataloder, num_classes, device):
     embedding, label, mean = compute_embeddings(model, dataloder, num_classes, device)
     outlayer_score = []
     for j in range(embedding.shape[0]):
-        outlayer_score.append(((mean - embedding[j]).norm(dim=0)**2).min()) 
+        outlayer_score.append(((mean - embedding[j]).norm(dim=1)**2).min()) 
     outlayer_score.sort()
     threshold = percentile(outlayer_score, 1)
     
     return threshold, mean
 
 def compute_ii_loss(out_z, labels, num_classes):
-    intra_spread = torch.Tensor([0]).cuda()
-    inter_separation = torch.tensor(float('inf')).cuda()# torch.inf
+    n_datapoints = len(out_z)
+    device = out_z.device
+    intra_spread = torch.Tensor([0]).to(device)
+    inter_separation = torch.tensor([float('inf')]).to(device)
     #inter_separation = torch.inf
     class_mean = bucket_mean(out_z, labels, num_classes) 
     for j in range(num_classes):
@@ -234,11 +236,12 @@ def compute_ii_loss(out_z, labels, num_classes):
         difference_from_mean = data_class - class_mean[j]
         norm_from_mean = difference_from_mean.norm()**2
         intra_spread += norm_from_mean
-        class_mean_previous = class_mean[:j]
-        norm_form_previous_means = (class_mean_previous - class_mean[j]).norm()**2
+        if j > 0:
+            class_mean_previous = class_mean[:j]
+        norm_form_previous_means = (class_mean_previous - class_mean[j]).norm(dim=1)**2
         inter_separation = min(inter_separation, norm_form_previous_means.min())
 
-    return intra_spread - inter_separation
+    return intra_spread/n_datapoints - inter_separation
 
 def bucket_mean(embeddings, labels, num_classes):
     tot = torch.zeros(num_classes, embeddings.shape[1], device=torch.device('cuda')).index_add(0, labels, embeddings)
@@ -266,7 +269,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             out_z, out_y = model(X)
             y_hat = []
             for j in range(out_z.shape[0]):
-                if (((mean - out_z[j]).norm(dim=0)**2).min() >= threshold):
+                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
                     y_hat.append(argmax(out_y[j].cpu()))
                 else:
                     y_hat.append(torch.tensor(-1)) # not_classificable
