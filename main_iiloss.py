@@ -359,7 +359,7 @@ if __name__ == "__main__":
                                                                     allParams.get_batch_size_test(),
                                                                     balance=True
                                                                     )
-    extraloader, extraset = data.get_single_dataloader("ImageSet/out",
+    extraloader, extraset = data.get_single_dataloader("ImageSet/extra",
                                                         transform_test,
                                                         128,
                                                         balance=False
