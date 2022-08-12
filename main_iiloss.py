@@ -15,25 +15,7 @@ import utils
 from tqdm import tqdm
 from numpy import argmax
 
-def not_freeze(net, layers: list):
-    """Defrost layers.
 
-    Args:
-        net (torchvision.models): The network.
-        layers (list): list of layers to defrost
-
-    Returns:
-        torchvision.models: The network with defrost layer in list layers.
-    """
-    for _, param in net.named_parameters():
-        param.requires_grad = False
-
-    # freeze layers
-    for name, param in net.named_parameters():
-        if name in layers:
-            param.requires_grad = True
-
-    return net
 
 def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int = 1):
     '''
