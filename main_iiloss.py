@@ -149,11 +149,11 @@ def train_epoch_iiloss(
         #if not (step % 2):
         ii_loss.backward(retain_graph = True)
         # 5. calculate the iiloss on the current mini-batch
-        #if step % 2 :
-        #    ce_loss = loss_fn(out_y, y)
-        ce_loss = loss_fn(out_y, y)
+        if not (step % 2) :
+            ce_loss = loss_fn(out_y, y)
+        #ce_loss = loss_fn(out_y, y)
         # 6. execute the backward pass given the current loss
-        ce_loss.backward()
+            ce_loss.backward()
         # 7. update the value of the params
         optimizer.step()
         if lr_scheduler is not None:
@@ -260,7 +260,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             out_z, out_y = model(X)
             y_hat = []
             for j in range(out_z.shape[0]):
-                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold) or max(out_y[j])<.2:
+                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold) or max(out_y[j])<0.20:
                     y_hat.append(argmax(out_y[j].cpu()))
                 else:
                     y_hat.append(torch.tensor(-1)) # not_classificable
@@ -298,7 +298,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
             y = y.to(device)
             out_z, out_y = model(X)
             for j in range(out_z.shape[0]):
-                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold) or max(out_y[j])<.2:
+                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold) or max(out_y[j])<0.20:
                     y_hat.append(0)
                 else:
                     y_hat.append(1) # not_classificable
