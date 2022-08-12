@@ -211,19 +211,28 @@ def compute_ii_loss(out_z, labels, num_classes):
     n_datapoints = len(out_z)
     device = out_z.device
     intra_spread = torch.Tensor([0]).to(device)
-    inter_separation = torch.tensor([float('inf')]).to(device)
-    class_mean = bucket_mean(out_z, labels, num_classes) 
+    inter_separation = torch.Tensor([float("inf")]).to(device)
+    class_mean = utils.bucket_mean(out_z, labels, num_classes)
+    empty_classes = []
+
     for j in range(num_classes):
+        # update intra_spread
         data_class = out_z[labels == j]
+        if len(data_class) == 0:
+            empty_classes.append(j)
+            continue
         difference_from_mean = data_class - class_mean[j]
         norm_from_mean = difference_from_mean.norm()**2
         intra_spread += norm_from_mean
-        if j > 0:
-            class_mean_previous = class_mean[:j]
-            norm_form_previous_means = (class_mean_previous - class_mean[j]).norm(dim=1)**2
-            inter_separation = min(inter_separation, norm_form_previous_means.min())
+        # update inter_separation
+        class_mean_previous = class_mean[list(set(range(j)).difference(empty_classes))]
+        if class_mean_previous.shape[0] > 0:
+            norm_from_previous_means = (class_mean_previous - class_mean[j]).norm(dim=1)**2
+            inter_separation = min(inter_separation, norm_from_previous_means.min())
 
     return intra_spread/n_datapoints - inter_separation
+
+
 
 def bucket_mean(embeddings, labels, num_classes):
     tot = torch.zeros(num_classes, embeddings.shape[1], device=torch.device('cuda')).index_add(0, labels, embeddings)
