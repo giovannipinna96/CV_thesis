@@ -198,11 +198,11 @@ def compute_embeddings(model, dataloader, num_classes, device):
 
 def compute_threshold(model, dataloder, num_classes, device):
     embedding, label, mean = compute_embeddings(model, dataloder, num_classes, device)
-    outlayer_score = []
+    outlier_score = []
     for j in range(embedding.shape[0]):
-        outlayer_score.append(((mean - embedding[j]).norm(dim=1)**2).min()) 
-    outlayer_score.sort()
-    threshold = percentile(outlayer_score, 1)
+        outlier_score.append(((mean - embedding[j]).norm(dim=1)**2).min()) 
+    outlier_score.sort()
+    threshold = percentile(outlier_score, 1)
     
     return threshold, mean
 
