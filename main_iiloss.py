@@ -274,16 +274,45 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
     utils.save_obj(file_name="save_values_test", first=save_values_test)
     return fin_loss, fin_perf
 
+def test_model_on_extra(model, dataloader, device=None, threshold = None, mean = None):
+    step = 0
+
+    if device is None:
+        device = utils.use_gpu_if_possible()
+
+    model = model.to(device)
+    performance_meter = AverageMeter()
+    model.eval()
+    with torch.no_grad():
+        for X, y in tqdm(dataloader):
+            X = X.to(device)
+            y = y.to(device)
+            out_z, out_y = model(X)
+            y_hat = []
+            for j in range(out_z.shape[0]):
+                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
+                    y_hat.append(argmax(out_y[j].cpu()))
+                else:
+                    y_hat.append(torch.tensor(-1)) # not_classificable
+            
+            y_hat = torch.stack(y_hat)
+            acc = (((y_hat == -1).sum())/y_hat.shape[0]).item()
+            performance_meter.update(acc, X.shape[0])
+            step += 1
+
+    print(f"TESTING on EXTRA - performance {performance_meter.avg:.4f}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--root_train", type=str, default="ImageSet/train")
     parser.add_argument("--root_test", type=str, default="ImageSet/test")
     parser.add_argument("--loss_type", type=str, default="iiloss")
-    parser.add_argument("--optimizer", type=str, default="sgd")
+    parser.add_argument("--optimizer", type=str, default="radam")
     parser.add_argument("--out_net", type=int, default=18)
     parser.add_argument("--is_feature_extraction", type=bool, default=True)
-    parser.add_argument("--weights_save_path", type=str, default="models/model_BEST.pt")
+    parser.add_argument("--weights_save_path", type=str, default="models/model_BEST2.pt")
     parser.add_argument("--pickle_save_path", type=str, default="out_ii")
     parser.add_argument("--is_ml", type=bool, default=True)
     parser.add_argument("--temperature", type=float, default=0.1)
@@ -324,7 +353,11 @@ if __name__ == "__main__":
                                                                     allParams.get_batch_size_train(),
                                                                     allParams.get_batch_size_test(),
                                                                     balance=True
-                                                                    ) 
+                                                                    )
+    extraloader, extraset = data.get_single_dataloader("ImageSet/extra",
+                                                        transform_test,
+                                                        balance=False
+                                                        ) 
 
     #define the number of different classes
     num_classes = len(trainset.classes)
@@ -370,6 +403,13 @@ if __name__ == "__main__":
                         threshold=threshold,
                         mean = mean
                         )
+    print('Strat not punches')
+    test_model_on_extra(net,
+                        testloader,
+                        device=allParams.get_device(),
+                        threshold=threshold,
+                        mean = mean
+                        )
 
     print('Saving weights...')
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
@@ -378,7 +418,7 @@ if __name__ == "__main__":
     torch.save(net.state_dict(), allParams.get_weights_save_path())
     
     print('Saving pickle')
-    utils.save_obj(file_name=f"./pickle_thres_mean_BEST",
+    utils.save_obj(file_name=f"./pickle_thres_mean_BEST2",
                         first=threshold,
                         second=mean
                         )

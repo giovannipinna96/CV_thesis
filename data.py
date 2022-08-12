@@ -107,6 +107,14 @@ def get_dataloaders(
         testloader = _get_balance_data_loaders(testset, batch_size_test, shuffle=False, num_workers=8, **kwargs)
     return trainloader, testloader, trainset, testset
 
+def get_single_dataloader(root, transform, batch_size, balance, **kwargs):
+    dataset = _get_dataset(root, transform)
+    if not balance:
+        dataloader = _get_dataloader(dataset, batch_size, shuffle=False, num_workers=8, **kwargs)
+    else:
+        dataloader = _get_balance_data_loaders(dataset, batch_size, shuffle=False, num_workers=8, **kwargs)
+    return dataloader, dataset
+
 
 if __name__ == "__main__":
     # FOR DEBUGGING LIBRARY FUNCS
