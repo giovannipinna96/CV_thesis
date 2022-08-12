@@ -91,7 +91,7 @@ def train_model(
         ii, ce = train_epoch_iiloss(model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
                         performance, device, lr_scheduler_batch, num_classes=num_classes)
         
-        print(f"Epoch {epoch+1} completed. Loss - total: {loss_meter.sum:.4f} - average: {loss_meter.avg:.4f}; Performance: {performance_meter.avg:.4f}")
+        print(f"Epoch {epoch+1} completed. Loss - total: II:{ii_loss_meter.avg:.4f}; CE:{ce_loss_meter.avg:.4f} - Performance: {ce_performance_meter.avg:.4f}")
 
         # produce checkpoint dictionary -- but only if the name and folder of the checkpoint are not None
         if checkpoint_name is not None and checkpoint_loc is not None:
@@ -226,7 +226,8 @@ def compute_threshold(model, dataloder, num_classes, device):
 
 def compute_ii_loss(out_z, labels, num_classes):
     intra_spread = torch.Tensor([0]).cuda()
-    inter_separation = torch.tensor(float('inf')).cuda()# torch.inf.cuda()
+    inter_separation = torch.tensor(float('inf')).cuda()# torch.inf
+    #inter_separation = torch.inf
     class_mean = bucket_mean(out_z, labels, num_classes) 
     for j in range(num_classes):
         data_class = out_z[labels == j]
@@ -291,7 +292,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", type=int, default=25)
+    parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--root_train", type=str, default="ImageSet/train")
     parser.add_argument("--root_test", type=str, default="ImageSet/test")
     parser.add_argument("--loss_type", type=str, default="iiloss")
@@ -302,6 +303,9 @@ if __name__ == "__main__":
     parser.add_argument("--pickle_save_path", type=str, default="out_ii")
     parser.add_argument("--is_ml", type=bool, default=True)
     parser.add_argument("--temperature", type=float, default=0.1)
+    parser.add_argument("--dim_latent", type=int, default=32)
+    parser.add_argument("--lr", type=float, default=.001)
+    parser.add_argument("--epochs_lr_decay", nargs="*", type=int, default=[10, 15])
     parser.add_argument
     args = parser.parse_args()
     # set all parameters
@@ -319,8 +323,11 @@ if __name__ == "__main__":
         out_net=args.out_net,
         is_feature_extraction=args.is_feature_extraction,
         is_ml = args.is_ml,
-        optimizer=args.optimizer
+        optimizer=args.optimizer,
+        dim_latent=args.dim_latent,
+        lr=args.lr
     )
+
 
     # transform the dataset
     transform_train = transformation.get_transform_train()
@@ -341,29 +348,20 @@ if __name__ == "__main__":
     net = createNet.resNet50Costum(num_classes)
     dict_custom_resnet50, classic = createNet.create_dict_resNet50Costum(net, "resnet50_aug_per_giovanni.pt_resnet50.pt")
     net.load_state_dict(dict_custom_resnet50)
-    #net = not_freeze(net, ['layer4.0.conv1.weight', 'layer4.0.bn1.weight', 'layer4.0.bn1.bias',
-    #'layer4.0.conv2.weight', 'layer4.0.bn2.weight', 'layer4.0.bn2.bias', 'layer4.0.conv3.weight',
-    #'layer4.0.bn3.weight', 'layer4.0.bn3.bias', 'layer4.0.downsample.0.weight',
-    #'layer4.0.downsample.1.weight', 'layer4.0.downsample.1.bias', 'layer4.1.conv1.weight',
-    #'layer4.1.bn1.weight', 'layer4.1.bn1.bias', 'layer4.1.conv2.weight', 'layer4.1.bn2.weight',
-    #'layer4.1.bn2.bias', 'layer4.1.conv3.weight', 'layer4.1.bn3.weight', 'layer4.1.bn3.bias',
-    #'layer4.2.conv1.weight', 'layer4.2.bn1.weight', 'layer4.2.bn1.bias', 'layer4.2.conv2.weight',
-    #'layer4.2.bn2.weight', 'layer4.2.bn2.bias', 'layer4.2.conv3.weight', 'layer4.2.bn3.weight',
-    #'layer4.2.bn3.bias', 'fc1.weight', 'fc1.bias', 'fc2.weight', 'fc2.bias'])
     if allParams.optimizer.lower() == "sgd":
         optimizer = torch.optim.SGD(net.parameters(),
-                                    lr=.0001,
+                                    lr=allParams.lr,
                                     momentum=.9,
                                     weight_decay=5e-4
                                     )
     elif allParams.optimizer.lower() == "radam":
-        optimizer = torch.optim.RAdam(net.parameters(), lr=.0001)
+        optimizer = torch.optim.RAdam(net.parameters(), lr=allParams.lr)
     else:
         raise NotImplementedError(f"Invalid optimizer {allParams.optimizer}. Please choose from 'sgd' or 'radam'.")
-    
+
     # set scheduler
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer,
-                                                     milestones=[50,75],
+                                                     milestones=args.epochs_lr_decay,
                                                      gamma=0.1
                                                      )
 
