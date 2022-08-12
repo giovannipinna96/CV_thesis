@@ -13,7 +13,8 @@ import os
 from torch import Tensor
 import utils
 from tqdm import tqdm
-from numpy import argmax, mean
+from numpy import argmax
+import numpy as np
 
 
 
@@ -297,7 +298,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
             acc.append(y_hat)
             step += 1
 
-    print(f"TESTING on EXTRA - performance {mean(acc):.4f}")
+    print(f"TESTING on EXTRA - performance {np.mean(acc):.4f}")
 
 
 if __name__ == "__main__":
