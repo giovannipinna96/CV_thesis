@@ -13,7 +13,7 @@ import os
 from torch import Tensor
 import utils
 from tqdm import tqdm
-from numpy import argmax
+from numpy import argmax, mean
 
 
 
@@ -276,12 +276,11 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
 
 def test_model_on_extra(model, dataloader, device=None, threshold = None, mean = None):
     step = 0
-
     if device is None:
         device = utils.use_gpu_if_possible()
 
     model = model.to(device)
-    performance_meter = AverageMeter()
+    acc = []
     model.eval()
     with torch.no_grad():
         for X, y in tqdm(dataloader):
@@ -291,16 +290,14 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
             y_hat = []
             for j in range(out_z.shape[0]):
                 if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
-                    y_hat.append(argmax(out_y[j].cpu()))
+                    y_hat.append(1)
                 else:
-                    y_hat.append(torch.tensor(-1)) # not_classificable
+                    y_hat.append(0) # not_classificable
             
-            y_hat = torch.stack(y_hat)
-            acc = (((y_hat == -1).sum())/y_hat.shape[0]).item()
-            performance_meter.update(acc, X.shape[0])
+            acc.append(y_hat)
             step += 1
 
-    print(f"TESTING on EXTRA - performance {performance_meter.avg:.4f}")
+    print(f"TESTING on EXTRA - performance {mean(acc):.4f}")
 
 
 if __name__ == "__main__":
