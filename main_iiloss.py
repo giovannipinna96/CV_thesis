@@ -147,7 +147,7 @@ def train_epoch_iiloss(
         #if not (step % 2):
         ii_loss = compute_ii_loss(out_z, y, num_classes) 
         # 4. execute the backward pass given the current loss
-        ii_loss.backward() #retain_graph = True
+        ii_loss.backward(retain_graph = True) #retain_graph = True
         # 5. calculate the iiloss on the current mini-batch
         #if (step % 2):
             #ce_loss = loss_fn(out_y, y)
@@ -181,7 +181,7 @@ def train_epoch_iiloss(
         ce_save_values.append(ce_performance_meter.avg)
         step += 1
     
-    return 0,0 #ii_save_values, ce_save_values
+    return ii_save_values, ce_save_values
 
 
 def compute_embeddings(model, dataloader, num_classes, device):
