@@ -144,41 +144,41 @@ def train_epoch_iiloss(
         #    this is the forward pass
         out_z, out_y = model(X)
         # 3. calculate the iiloss on the current mini-batch
-        if not (step % 2):
-            ii_loss = compute_ii_loss(out_z, y, num_classes) 
+        #if not (step % 2):
+        ii_loss = compute_ii_loss(out_z, y, num_classes) 
         # 4. execute the backward pass given the current loss
-            ii_loss.backward() #retain_graph = True
+        ii_loss.backward() #retain_graph = True
         # 5. calculate the iiloss on the current mini-batch
-        if (step % 2):
+        #if (step % 2):
             #ce_loss = loss_fn(out_y, y)
-            ce_loss = loss_fn(out_y, y)
+        ce_loss = loss_fn(out_y, y)
         # 6. execute the backward pass given the current loss
-            ce_loss.backward()
+        ce_loss.backward()
         # 7. update the value of the params
         optimizer.step()
         if lr_scheduler is not None:
             lr_scheduler.step()
         # 8. calculate the accuracy for this mini-batch
-        if not (step % 2):
-            ii_acc = performance(out_z, y)
-        if (step % 2):
-            ce_acc = performance(out_y, y)
+        #if not (step % 2):
+        ii_acc = performance(out_z, y)
+        #if (step % 2):
+        ce_acc = performance(out_y, y)
         # 9. update the loss and accuracy AverageMeter
-        if not (step % 2):
-            ii_loss_meter.update(val=ii_loss.item(), n=X.shape[0])
-            ii_performance_meter.update(val=ii_acc, n=X.shape[0])
-        if (step % 2):
-            ce_loss_meter.update(val=ce_loss.item(), n=X.shape[0])
-            ce_performance_meter.update(val=ce_acc, n=X.shape[0])
+        #if not (step % 2):
+        ii_loss_meter.update(val=ii_loss.item(), n=X.shape[0])
+        ii_performance_meter.update(val=ii_acc, n=X.shape[0])
+        #if (step % 2):
+        ce_loss_meter.update(val=ce_loss.item(), n=X.shape[0])
+        ce_performance_meter.update(val=ce_acc, n=X.shape[0])
 
         #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
         # save loss and accurancy
-        if not (step % 2):
-            ii_save_values.append(ii_loss_meter.avg)
-            ii_save_values.append(ii_performance_meter.avg)
-        if (step % 2):
-            ce_save_values.append(ce_loss_meter.avg)
-            ce_save_values.append(ce_performance_meter.avg)
+        #if not (step % 2):
+        ii_save_values.append(ii_loss_meter.avg)
+        ii_save_values.append(ii_performance_meter.avg)
+        #if (step % 2):
+        ce_save_values.append(ce_loss_meter.avg)
+        ce_save_values.append(ce_performance_meter.avg)
         step += 1
     
     return 0,0 #ii_save_values, ce_save_values
@@ -310,7 +310,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
 
             step += 1
 
-    print(f"TESTING on EXTRA - performance {y_hat:.4f}")
+    print(f"TESTING on EXTRA - performance {np.mean(y_hat):.4f}")
 
 
 if __name__ == "__main__":
