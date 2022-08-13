@@ -215,6 +215,7 @@ def compute_threshold(model, dataloder, num_classes, device):
 
 def compute_ii_loss(out_z, labels, num_classes):
     n_datapoints = len(out_z)
+    delta = 0
     device = out_z.device
     intra_spread = torch.Tensor([0]).to(device)
     inter_separation = torch.Tensor([float("inf")]).to(device)
@@ -236,9 +237,7 @@ def compute_ii_loss(out_z, labels, num_classes):
             norm_from_previous_means = (class_mean_previous - class_mean[j]).norm(dim=1)**2
             inter_separation = min(inter_separation, norm_from_previous_means.min())
 
-    return intra_spread/n_datapoints - inter_separation
-
-
+    return intra_spread/n_datapoints - min(delta, inter_separation)
 
 def bucket_mean(embeddings, labels, num_classes):
     tot = torch.zeros(num_classes, embeddings.shape[1], device=torch.device('cuda')).index_add(0, labels, embeddings)
