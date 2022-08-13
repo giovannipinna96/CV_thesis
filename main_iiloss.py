@@ -310,7 +310,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
 
             step += 1
 
-    print(f"TESTING on EXTRA - performance {y_hat}")
+    print(f"TESTING on EXTRA - performance {np.mean(y_hat):.4f}")
 
 
 if __name__ == "__main__":
@@ -418,7 +418,7 @@ if __name__ == "__main__":
     test_model_on_extra(net,
                         extraloader,
                         device=allParams.get_device(),
-                        threshold = threshold,
+                        threshold=threshold,
                         mean = mean
                         )
 
