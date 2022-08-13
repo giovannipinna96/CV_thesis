@@ -215,7 +215,7 @@ def compute_threshold(model, dataloder, num_classes, device):
 
 def compute_ii_loss(out_z, labels, num_classes):
     n_datapoints = len(out_z)
-    delta = 0
+    delta = torch.Tensor([float("inf")])
     device = out_z.device
     intra_spread = torch.Tensor([0]).to(device)
     inter_separation = torch.Tensor([float("inf")]).to(device)
@@ -265,7 +265,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             out_z, out_y = model(X)
             y_hat = []
             for j in range(out_z.shape[0]):
-                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold) and torch.nn.functional.softmax(out_y[j], dim=1)>0.21:
+                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
                     y_hat.append(argmax(out_y[j].cpu()))
                 else:
                     y_hat.append(torch.tensor(-1)) # not_classificable
@@ -303,7 +303,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
             y = y.to(device)
             out_z, out_y = model(X)
             for j in range(out_z.shape[0]):
-                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold) and torch.nn.functional.softmax(out_y[j], dim=1)>0.21:
+                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
                     y_hat.append(0)
                 else:
                     y_hat.append(1) # not_classificable
