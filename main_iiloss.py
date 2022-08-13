@@ -159,23 +159,29 @@ def train_epoch_iiloss(
         if lr_scheduler is not None:
             lr_scheduler.step()
         # 8. calculate the accuracy for this mini-batch
-        ii_acc = performance(out_z, y)
-        ce_acc = performance(out_y, y)
+        if not (step % 2):
+            ii_acc = performance(out_z, y)
+        if (step % 2):
+            ce_acc = performance(out_y, y)
         # 9. update the loss and accuracy AverageMeter
-        ii_loss_meter.update(val=ii_loss.item(), n=X.shape[0])
-        ii_performance_meter.update(val=ii_acc, n=X.shape[0])
-        ce_loss_meter.update(val=ce_loss.item(), n=X.shape[0])
-        ce_performance_meter.update(val=ce_acc, n=X.shape[0])
+        if not (step % 2):
+            ii_loss_meter.update(val=ii_loss.item(), n=X.shape[0])
+            ii_performance_meter.update(val=ii_acc, n=X.shape[0])
+        if (step % 2):
+            ce_loss_meter.update(val=ce_loss.item(), n=X.shape[0])
+            ce_performance_meter.update(val=ce_acc, n=X.shape[0])
 
         #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
         # save loss and accurancy
-        ii_save_values.append(ii_loss_meter.avg)
-        ii_save_values.append(ii_performance_meter.avg)
-        ce_save_values.append(ce_loss_meter.avg)
-        ce_save_values.append(ce_performance_meter.avg)
+        if not (step % 2):
+            ii_save_values.append(ii_loss_meter.avg)
+            ii_save_values.append(ii_performance_meter.avg)
+        if (step % 2):
+            ce_save_values.append(ce_loss_meter.avg)
+            ce_save_values.append(ce_performance_meter.avg)
         step += 1
     
-    return ii_save_values, ce_save_values
+    return 0,0 #ii_save_values, ce_save_values
 
 
 def compute_embeddings(model, dataloader, num_classes, device):
