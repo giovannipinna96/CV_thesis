@@ -416,9 +416,9 @@ if __name__ == "__main__":
                         )
     print('Strat not punches')
     test_model_on_extra(net,
-                        testloader,
+                        extraloader,
                         device=allParams.get_device(),
-                        threshold=threshold,
+                        threshold = threshold,
                         mean = mean
                         )
 
