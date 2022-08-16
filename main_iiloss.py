@@ -212,27 +212,27 @@ def compute_threshold(model, dataloder, num_classes, device):
 def compute_ii_loss(out_z, labels, num_classes):
     n_datapoints = len(out_z)
     device = out_z.device
-    delta = torch.Tensor([float("inf")]).to(device)
+    delta = float("inf").to(device)
     intra_spread = torch.Tensor([0]).to(device)
     inter_separation = torch.Tensor([float("inf")]).to(device)
-    class_mean = bucket_mean(out_z, labels, num_classes)
-    #empty_classes = []
+    class_mean = utils.bucket_mean(out_z, labels, num_classes)
+    empty_classes = []
 
     for j in range(num_classes):
         # update intra_spread
         data_class = out_z[labels == j]
-        #if len(data_class) == 0:
-        #    empty_classes.append(j)
-        #    continue
+        if len(data_class) == 0:
+            empty_classes.append(j)
+            continue
         difference_from_mean = data_class - class_mean[j]
         norm_from_mean = difference_from_mean.norm()**2
         intra_spread += norm_from_mean
         # update inter_separation
-        class_mean_previous = class_mean[list(set(range(j)))]#.difference(empty_classes))]
+        class_mean_previous = class_mean[list(set(range(j)).difference(empty_classes))]
         if class_mean_previous.shape[0] > 0:
             norm_from_previous_means = (class_mean_previous - class_mean[j]).norm(dim=1)**2
             inter_separation = min(inter_separation, norm_from_previous_means.min())
-
+        
     return intra_spread/n_datapoints - min(delta, inter_separation)
 
 def bucket_mean(embeddings, labels, num_classes):
