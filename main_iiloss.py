@@ -407,14 +407,14 @@ if __name__ == "__main__":
                         testloader,
                         loss_fn=loss_fn,
                         device=allParams.get_device(),
-                        threshold=5,
+                        threshold=0.05,
                         mean = mean
                         )
     print('Strat not punches')
     test_model_on_extra(net,
                         extraloader,
                         device=allParams.get_device(),
-                        threshold=5,
+                        threshold=0.05,
                         mean = mean
                         )
 
