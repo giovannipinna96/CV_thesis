@@ -134,7 +134,6 @@ def train_epoch_iiloss(
     step = 0
     ii_save_values = []
     ce_save_values = []
-    model.train()
     for i, (X, y) in enumerate(tqdm(dataloader)):
         X = X.to(device)
         y = y.to(device)
@@ -195,7 +194,7 @@ def compute_embeddings(model, dataloader, num_classes, device):
 
     embedding = torch.cat(embeddings)
     label = torch.cat(labels)
-    mean = bucket_mean(embedding, label, num_classes)
+    mean = bucket_mean(embedding, label, num_classes=labels.max().item()+1)
 
     return embedding, label, mean  
 
