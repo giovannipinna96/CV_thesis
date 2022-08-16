@@ -401,20 +401,22 @@ if __name__ == "__main__":
                       loss_type=allParams.get_loss_type(),
                       num_classes=num_classes
                       )
+    print(threshold)
+    print(mean)
 
     print('Start Test ii loss')
     test_model_iiloss(net,
                         testloader,
                         loss_fn=loss_fn,
                         device=allParams.get_device(),
-                        threshold=0.05,
+                        threshold=threshold,
                         mean = mean
                         )
     print('Strat not punches')
     test_model_on_extra(net,
                         extraloader,
                         device=allParams.get_device(),
-                        threshold=0.05,
+                        threshold=threshold,
                         mean = mean
                         )
 
