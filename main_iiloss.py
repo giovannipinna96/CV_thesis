@@ -38,6 +38,55 @@ def accuracy(nn_output: Tensor, ground_truth: Tensor, k: int = 1):
     # now getting the accuracy is easy, we just operate the sum of the tensor and divide it by the number of examples
     acc = correct_items.sum().item() / nn_output.shape[0]
     return acc
+class IILoss(torch.nn.Module):
+    '''
+    Loss defined as in "Learning a Neural-network-based Representation for Open Set Recognition" (2018), Hassen & Chan.
+    Intra_spread is sum of the squared distances between each data point and its class mean.
+    Inter_separation is the minimum of the squared distances between each class mean and the mean of the other classes.
+    The loss is defined as intra_spread - inter_separation.
+    Attributes
+    ----------
+    delta: a float representing the maximum inter_separation between classes. It is used to prevent the inter_separation term from dominating the intra_spread term and other losses such as cross-entropy.
+    '''
+    def __init__(self, delta:float=float("inf")):
+        super().__init__()
+        self.delta = delta
+
+    def forward(self, embeddings:torch.Tensor, labels:torch.Tensor, num_classes:int) -> torch.Tensor:
+        '''
+        Compute the loss for the given embeddings and labels.
+        Parameters
+        ----------
+        embeddings: a torch.Tensor of shape (N, D) where N is the number of data points and D is the embedding dimension.
+        labels: a torch.Tensor of longs or ints of shape (N)
+        num_classes: the number of classes. Needed in case some classes are not represented within the current mini-batch.
+        Returns
+        -------
+        a singleton torch.Tensor representing the loss.
+        '''
+        n_datapoints = len(embeddings)
+        device = embeddings.device
+        intra_spread = torch.Tensor([0]).to(device)
+        inter_separation = torch.Tensor([float("inf")]).to(device)
+        class_mean = bucket_mean(embeddings, labels, num_classes)
+        empty_classes = []
+
+        for j in range(num_classes):
+            # update intra_spread
+            data_class = embeddings[labels == j]
+            if len(data_class) == 0:
+                empty_classes.append(j)
+                continue
+            difference_from_mean = data_class - class_mean[j]
+            norm_from_mean = difference_from_mean.norm()**2
+            intra_spread += norm_from_mean
+            # update inter_separation
+            class_mean_previous = class_mean[list(set(range(j)).difference(empty_classes))]
+            if class_mean_previous.shape[0] > 0:
+                norm_from_previous_means = (class_mean_previous - class_mean[j]).norm(dim=1)**2
+                inter_separation = min(inter_separation, norm_from_previous_means.min())
+        
+        return intra_spread/n_datapoints - min(self.delta, inter_separation)
 
 def train_model(
     model, dataloader, loss_fn, optimizer, num_epochs, checkpoint_loc=None, checkpoint_name="checkpoint.pt",
@@ -71,7 +120,8 @@ def train_model(
         ii_performance_meter = AverageMeter()
         ce_loss_meter = AverageMeter()
         ce_performance_meter = AverageMeter()
-        train_epoch_iiloss(model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
+        ii_loss_fn = ii_loss.IILoss(delta=args.delta_ii)
+        train_epoch_iiloss(ii_loss_fn, model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
                         performance, device, lr_scheduler_batch, num_classes=num_classes)
         
         print(f"Epoch {epoch+1} completed. Loss - total: II:{ii_loss_meter.avg:.4f}; CE:{ce_loss_meter.avg:.4f} - Performance: {ce_performance_meter.avg:.4f}")
@@ -145,7 +195,8 @@ def train_epoch_iiloss(
         out_z, out_y = model(X)
         # 3. calculate the iiloss on the current mini-batch
         if (i % 2 == 0) :
-            ii_loss = compute_ii_loss(out_z, y, num_classes) 
+            #ii_loss = compute_ii_loss(out_z, y, num_classes) 
+            ii_loss = ii_loss_fn(out_z, y, num_classes) 
         # 4. execute the backward pass given the current loss
             ii_loss.backward() #retain_graph = True
         # 5. calculate the iiloss on the current mini-batch
