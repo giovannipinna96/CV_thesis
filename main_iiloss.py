@@ -196,7 +196,7 @@ def train_epoch_iiloss(
         # 3. calculate the iiloss on the current mini-batch
         if (i % 2 == 0) :
             #ii_loss = compute_ii_loss(out_z, y, num_classes) 
-            ii_loss = IILOSS(out_z, y, num_classes)
+            ii_loss = IILoss(out_z, y, num_classes)
         # 4. execute the backward pass given the current loss
             ii_loss.backward() #retain_graph = True
         # 5. calculate the iiloss on the current mini-batch
