@@ -179,46 +179,6 @@ def train_epoch_iiloss(
     
     #return 0,0 #ii_save_values, ce_save_values
 
-def eval_outlier_scores(dataloader:torch.utils.data.DataLoader, model:torch.nn.Module, traindata_means:torch.Tensor, device:torch.device) -> torch.Tensor:
-    '''
-    Evaluates the outlier scores for a model on a dataloader.
-    '''
-    model.to(device)
-    model.eval()
-    with torch.no_grad():
-        outlier_scores = torch.zeros(len(dataloader.dataset))
-        for i, (X, y) in enumerate(tqdm(dataloader)):
-            X = X.to(device)
-            y = y.to(device)
-            embeddings, y_hat = model(X)
-            outlier_scores_batch = outlier_score(embeddings, traindata_means)
-            outlier_scores[i*X.shape[0]:(i+1)*X.shape[0]] = outlier_scores_batch
-            print(outlier_scores)
-    return outlier_scores
-
-def outlier_score(embeddings:torch.Tensor, train_class_means:torch.Tensor):
-    '''
-    Compute the outlier score for the given batch of embeddings and class means obtained from the training set.
-    The outlier score for a single datapoint is defined as min_j(||z - m_j||^2), where j is a category and m_j is the mean embedding of this class.
-    Parameters
-    ----------
-    embeddings: a torch.Tensor of shape (N, D) where N is the number of data points and D is the embedding dimension.
-    train_class_means: a torch.Tensor of shape (K, D) where K is the number of classes.
-    Returns
-    -------
-    a torch.Tensor of shape (N), representing the outlier score for each of the data points.
-    '''
-    assert len(embeddings.shape) == 2, f"Expected 2D tensor of shape N ⨉ D (N=datapoints, D=embedding dimension), got {embeddings.shape}"
-    assert len(train_class_means.shape) == 2, f"Expected 2D tensor of shape K ⨉ D (K=num_classes, D=embedding dimension), got {train_class_means.shape}"
-    # create an expanded version of the embeddings of dimension N ⨉ K ⨉ D, useful for subtracting means
-    embeddings_repeated = embeddings.unsqueeze(1).repeat((1, train_class_means.shape[0], 1))
-    # compute the difference between the embeddings and the class means
-    difference_from_mean = embeddings_repeated - train_class_means
-    # compute the squared norm of the difference (N ⨉ K matrix)
-    norm_from_mean = difference_from_mean.norm(dim=2)**2
-    # get the min for each datapoint
-    return norm_from_mean.min(dim=1).values
-
 def compute_embeddings(model, dataloader, num_classes, device):
     embeddings = []
     labels = []
@@ -447,19 +407,16 @@ if __name__ == "__main__":
                         testloader,
                         loss_fn=loss_fn,
                         device=allParams.get_device(),
-                        threshold=threshold,
+                        threshold=5,
                         mean = mean
                         )
     print('Strat not punches')
     test_model_on_extra(net,
                         extraloader,
                         device=allParams.get_device(),
-                        threshold=threshold,
+                        threshold=5,
                         mean = mean
                         )
-
-    outlier_scores_test = eval_outlier_scores(testloader, net, mean, device=allParams.get_device())
-    outlier_scores_extra = eval_outlier_scores(extraloader, net, mean, device=allParams.get_device())
 
     print('Saving weights...')
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
