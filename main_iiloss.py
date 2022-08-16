@@ -242,7 +242,8 @@ def bucket_mean(embeddings, labels, num_classes):
 
     return tot/count
 
-def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=None, device=None, threshold = None, mean = None):
+def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=None, device=None,
+                    threshold = None, mean = None):
     step = 0
     # create an AverageMeter for the loss if passed
     if loss_fn is not None:
@@ -262,7 +263,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             out_z, out_y = model(X)
             y_hat = []
             for j in range(out_z.shape[0]):
-                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
+                if (((mean - out_z[j]).norm()**2).min() >= threshold):
                     y_hat.append(argmax(out_y[j].cpu()))
                 else:
                     y_hat.append(torch.tensor(-1)) # not_classificable
@@ -300,7 +301,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
             y = y.to(device)
             out_z, out_y = model(X)
             for j in range(out_z.shape[0]):
-                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
+                if (((mean - out_z[j]).norm()**2).min() >= threshold):
                     y_hat.append(0)
                 else:
                     y_hat.append(1) # not_classificable
