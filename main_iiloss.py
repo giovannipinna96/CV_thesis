@@ -71,7 +71,7 @@ def train_model(
         ii_performance_meter = AverageMeter()
         ce_loss_meter = AverageMeter()
         ce_performance_meter = AverageMeter()
-        ii, ce = train_epoch_iiloss(model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
+        train_epoch_iiloss(model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
                         performance, device, lr_scheduler_batch, num_classes=num_classes)
         
         print(f"Epoch {epoch+1} completed. Loss - total: II:{ii_loss_meter.avg:.4f}; CE:{ce_loss_meter.avg:.4f} - Performance: {ce_performance_meter.avg:.4f}")
@@ -177,7 +177,7 @@ def train_epoch_iiloss(
             ce_save_values.append(ce_performance_meter.avg)
         step += 1
     
-    return 0,0 #ii_save_values, ce_save_values
+    #return 0,0 #ii_save_values, ce_save_values
 
 
 def compute_embeddings(model, dataloader, num_classes, device):
