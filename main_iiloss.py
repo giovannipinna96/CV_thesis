@@ -401,8 +401,6 @@ if __name__ == "__main__":
                       loss_type=allParams.get_loss_type(),
                       num_classes=num_classes
                       )
-    print(threshold)
-    print(mean)
 
     print('Start Test ii loss')
     test_model_iiloss(net,
