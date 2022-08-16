@@ -120,7 +120,7 @@ def train_model(
         ii_performance_meter = AverageMeter()
         ce_loss_meter = AverageMeter()
         ce_performance_meter = AverageMeter()
-        ii_loss_fn = ii_loss.IILoss(delta=args.delta_ii)
+        ii_loss_fn = ii_loss.IILoss(delta=float("inf"))
         train_epoch_iiloss(ii_loss_fn, model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter, ce_loss_meter, ce_performance_meter,
                         performance, device, lr_scheduler_batch, num_classes=num_classes)
         
