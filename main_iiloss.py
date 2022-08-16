@@ -134,7 +134,7 @@ def train_epoch_iiloss(
     step = 0
     ii_save_values = []
     ce_save_values = []
-    for X, y in tqdm(dataloader):
+    for i, (X, y) in enumerate(tqdm(dataloader)):
         X = X.to(device)
         y = y.to(device)
         # 1. reset the gradients previously accumulated by the optimizer
@@ -144,44 +144,40 @@ def train_epoch_iiloss(
         #    this is the forward pass
         out_z, out_y = model(X)
         # 3. calculate the iiloss on the current mini-batch
-        #if not (step % 2):
-        ii_loss = compute_ii_loss(out_z, y, num_classes) 
+        if (i % 2 == 0):
+            ii_loss = compute_ii_loss(out_z, y, num_classes) 
         # 4. execute the backward pass given the current loss
-        ii_loss.backward(retain_graph = True) #retain_graph = True
+            ii_loss.backward(retain_graph = True) #retain_graph = True
         # 5. calculate the iiloss on the current mini-batch
-        #if (step % 2):
-            #ce_loss = loss_fn(out_y, y)
-        ce_loss = loss_fn(out_y, y)
+        if (i % 2 == 1):
+            ce_loss = loss_fn(out_y, y)
         # 6. execute the backward pass given the current loss
-        ce_loss.backward()
+            ce_loss.backward()
         # 7. update the value of the params
         optimizer.step()
         if lr_scheduler is not None:
             lr_scheduler.step()
         # 8. calculate the accuracy for this mini-batch
-        #if not (step % 2):
-        ii_acc = performance(out_z, y)
-        #if (step % 2):
-        ce_acc = performance(out_y, y)
-        # 9. update the loss and accuracy AverageMeter
-        #if not (step % 2):
-        ii_loss_meter.update(val=ii_loss.item(), n=X.shape[0])
-        ii_performance_meter.update(val=ii_acc, n=X.shape[0])
-        #if (step % 2):
-        ce_loss_meter.update(val=ce_loss.item(), n=X.shape[0])
-        ce_performance_meter.update(val=ce_acc, n=X.shape[0])
+        if (i % 2 == 0):
+            ii_acc = performance(out_z, y)
+            ii_loss_meter.update(val=ii_loss.item(), n=X.shape[0])
+            ii_performance_meter.update(val=ii_acc, n=X.shape[0])
+        if (i % 2 == 1):
+            ce_acc = performance(out_y, y)
+            ce_loss_meter.update(val=ce_loss.item(), n=X.shape[0])
+            ce_performance_meter.update(val=ce_acc, n=X.shape[0])
 
         #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
         # save loss and accurancy
-        #if not (step % 2):
-        ii_save_values.append(ii_loss_meter.avg)
-        ii_save_values.append(ii_performance_meter.avg)
-        #if (step % 2):
-        ce_save_values.append(ce_loss_meter.avg)
-        ce_save_values.append(ce_performance_meter.avg)
+        if (i % 2 == 0):
+            ii_save_values.append(ii_loss_meter.avg)
+            ii_save_values.append(ii_performance_meter.avg)
+        if (i % 2 == 1):
+            ce_save_values.append(ce_loss_meter.avg)
+            ce_save_values.append(ce_performance_meter.avg)
         step += 1
     
-    return ii_save_values, ce_save_values
+    return 0,0 #ii_save_values, ce_save_values
 
 
 def compute_embeddings(model, dataloader, num_classes, device):
@@ -207,7 +203,7 @@ def compute_threshold(model, dataloder, num_classes, device):
     embedding, label, mean = compute_embeddings(model, dataloder, num_classes, device)
     outlier_score = []
     for j in range(embedding.shape[0]):
-        outlier_score.append(((mean - embedding[j]).norm(dim=1)**2).min()) 
+        outlier_score.append(((mean - embedding[j]).norm(dim=2)**2).min(dim=1)) 
     outlier_score.sort()
     threshold = percentile(outlier_score, 1)
     
@@ -240,8 +236,9 @@ def compute_ii_loss(out_z, labels, num_classes):
     return intra_spread/n_datapoints - min(delta, inter_separation)
 
 def bucket_mean(embeddings, labels, num_classes):
-    tot = torch.zeros(num_classes, embeddings.shape[1], device=torch.device('cuda')).index_add(0, labels, embeddings)
-    count = torch.zeros(num_classes, embeddings.shape[1], device=torch.device('cuda')).index_add(0, labels, torch.ones_like(embeddings))
+    device = embeddings.device
+    tot = torch.zeros(num_classes, embeddings.shape[1], device=device).index_add(0, labels, embeddings)
+    count = torch.zeros(num_classes, embeddings.shape[1], device=device).index_add(0, labels, torch.ones_like(embeddings))
 
     return tot/count
 
