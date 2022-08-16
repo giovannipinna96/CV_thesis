@@ -126,6 +126,56 @@ class AverageMeter(object):
         self.count += n
         self.avg = self.sum / self.count
 
+class IILoss(torch.nn.Module):
+    '''
+    Loss defined as in "Learning a Neural-network-based Representation for Open Set Recognition" (2018), Hassen & Chan.
+    Intra_spread is sum of the squared distances between each data point and its class mean.
+    Inter_separation is the minimum of the squared distances between each class mean and the mean of the other classes.
+    The loss is defined as intra_spread - inter_separation.
+    Attributes
+    ----------
+    delta: a float representing the maximum inter_separation between classes. It is used to prevent the inter_separation term from dominating the intra_spread term and other losses such as cross-entropy.
+    '''
+    def __init__(self, delta:float=float("inf")):
+        super().__init__()
+        self.delta = delta
+
+    def forward(self, embeddings:torch.Tensor, labels:torch.Tensor, num_classes:int) -> torch.Tensor:
+        '''
+        Compute the loss for the given embeddings and labels.
+        Parameters
+        ----------
+        embeddings: a torch.Tensor of shape (N, D) where N is the number of data points and D is the embedding dimension.
+        labels: a torch.Tensor of longs or ints of shape (N)
+        num_classes: the number of classes. Needed in case some classes are not represented within the current mini-batch.
+        Returns
+        -------
+        a singleton torch.Tensor representing the loss.
+        '''
+        n_datapoints = len(embeddings)
+        device = embeddings.device
+        intra_spread = torch.Tensor([0]).to(device)
+        inter_separation = torch.Tensor([float("inf")]).to(device)
+        class_mean = bucket_mean(embeddings, labels, num_classes)
+        empty_classes = []
+
+        for j in range(num_classes):
+            # update intra_spread
+            data_class = embeddings[labels == j]
+            if len(data_class) == 0:
+                empty_classes.append(j)
+                continue
+            difference_from_mean = data_class - class_mean[j]
+            norm_from_mean = difference_from_mean.norm()**2
+            intra_spread += norm_from_mean
+            # update inter_separation
+            class_mean_previous = class_mean[list(set(range(j)).difference(empty_classes))]
+            if class_mean_previous.shape[0] > 0:
+                norm_from_previous_means = (class_mean_previous - class_mean[j]).norm(dim=1)**2
+                inter_separation = min(inter_separation, norm_from_previous_means.min())
+        
+        return intra_spread/n_datapoints - min(self.delta, inter_separation)
+
 def train_epoch_iiloss(
     model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter,ce_loss_meter, ce_performance_meter, performance, device,
     lr_scheduler, num_classes
@@ -145,7 +195,8 @@ def train_epoch_iiloss(
         out_z, out_y = model(X)
         # 3. calculate the iiloss on the current mini-batch
         if (i % 2 == 0) :
-            ii_loss = compute_ii_loss(out_z, y, num_classes) 
+            #ii_loss = compute_ii_loss(out_z, y, num_classes) 
+            ii_loss = IILOSS(out_z, y, num_classes)
         # 4. execute the backward pass given the current loss
             ii_loss.backward() #retain_graph = True
         # 5. calculate the iiloss on the current mini-batch
@@ -241,6 +292,7 @@ def bucket_mean(embeddings, labels, num_classes):
     count = torch.zeros(num_classes, embeddings.shape[1], device=device).index_add(0, labels, torch.ones_like(embeddings))
 
     return tot/count
+    
 
 def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=None, device=None,
                         threshold = None, mean = None):
