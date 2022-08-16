@@ -134,6 +134,7 @@ def train_epoch_iiloss(
     step = 0
     ii_save_values = []
     ce_save_values = []
+    model.train()
     for i, (X, y) in enumerate(tqdm(dataloader)):
         X = X.to(device)
         y = y.to(device)
