@@ -194,7 +194,7 @@ def compute_embeddings(model, dataloader, num_classes, device):
 
     embedding = torch.cat(embeddings)
     label = torch.cat(labels)
-    mean = bucket_mean(embedding, label, num_classes=labels.max().item()+1)
+    mean = bucket_mean(embedding, label, num_classes=label.max().item()+1)
 
     return embedding, label, mean  
 
