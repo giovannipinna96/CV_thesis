@@ -177,7 +177,7 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 def train_epoch_iiloss(
-    model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter,ce_loss_meter, ce_performance_meter, performance, device,
+    ii_loss_fn, model, dataloader, loss_fn, optimizer, ii_loss_meter, ii_performance_meter,ce_loss_meter, ce_performance_meter, performance, device,
     lr_scheduler, num_classes
 ):
     print('Start Train ii loss')
