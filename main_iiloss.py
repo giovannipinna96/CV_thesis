@@ -98,10 +98,10 @@ def train_model(
     utils.save_obj(file_name="save_value_train", first= save_values_train)
 
 
-    if threshold is None:
-        return loss_meter.sum, performance_meter.avg
-    else:
-        return loss_meter.sum, performance_meter.avg, threshold, mean
+    #if threshold is None:
+    return loss_meter.sum, performance_meter.avg
+    #else:
+    #    return loss_meter.sum, performance_meter.avg, threshold, mean
 
 class AverageMeter(object):
     '''
@@ -423,7 +423,7 @@ if __name__ == "__main__":
 
     # train
     print('Start Train')
-    _, _, threshold, mean = train_model(net,
+    _, _, = train_model(net,
                       trainloader,
                       loss_fn,
                       optimizer,
