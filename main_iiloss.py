@@ -96,15 +96,12 @@ def train_model(
             else:
                 lr_scheduler.step()
     utils.save_obj(file_name="save_value_train", first= save_values_train)
-    
-    print('Compute threshold')
-    threshold, mean = compute_threshold(model, dataloader, num_classes, device)
 
 
     if threshold is None:
         return loss_meter.sum, performance_meter.avg
     else:
-        return loss_meter.sum, performance_meter.avg, threshold, mean
+        return loss_meter.sum, performance_meter.avg, threshold, mean, model,
 
 class AverageMeter(object):
     '''
@@ -426,7 +423,7 @@ if __name__ == "__main__":
 
     # train
     print('Start Train')
-    _, _, threshold, mean = train_model(net,
+    _, _, threshold, mean, model = train_model(net,
                       trainloader,
                       loss_fn,
                       optimizer,
@@ -436,9 +433,11 @@ if __name__ == "__main__":
                       loss_type=allParams.get_loss_type(),
                       num_classes=num_classes
                       )
+    print('Compute threshold')
+    threshold, mean = compute_threshold(model, trainloader, num_classes, allParams.get_device())
 
     print('Start Test ii loss')
-    test_model_iiloss(net,
+    test_model_iiloss(model,
                         testloader,
                         loss_fn=loss_fn,
                         device=allParams.get_device(),
@@ -446,7 +445,7 @@ if __name__ == "__main__":
                         mean = mean
                         )
     print('Strat not punches')
-    test_model_on_extra(net,
+    test_model_on_extra(model,
                         extraloader,
                         device=allParams.get_device(),
                         threshold=threshold,
