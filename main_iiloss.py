@@ -202,7 +202,7 @@ def compute_threshold(model, dataloder, num_classes, device):
     outlier_score_val = outlier_score(embedding, mean)
     outlier_score_val2 = outlier_score_val.tolist()
     outlier_score_val2.sort()
-    threshold = percentile(outlier_score_val2, 1)
+    threshold = percentile(outlier_score_val2, 99)
     print(threshold)
     
     return threshold, mean
@@ -254,16 +254,16 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
     performance_meter = AverageMeter()
     model.eval()
     save_values_test = []
-    m = []
     with torch.no_grad():
         for X, y in tqdm(dataloader):
             X = X.to(device)
             y = y.to(device)
             out_z, out_y = model(X)
             y_hat = []
-            for j in range(out_z.shape[0]):
-                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
-                    m.append(((mean - out_z[j]).norm(dim=1)**2))
+            outlier_score_val = outlier_score(out_z, mean)
+            for j in range(outlier_score_val.shape[0]):
+                #if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
+                if (outlier_score_val[j] >= threshold):
                     y_hat.append(argmax(out_y[j].cpu()))
                 else:
                     y_hat.append(torch.tensor(-1)) # not_classificable
@@ -282,10 +282,6 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
     # get final performances
     fin_loss = loss_meter.sum if loss_fn is not None else None
     fin_perf = performance_meter.avg
-    mm = torch.stack(m)
-    print (mm.max())
-    print (mm.min())
-    print (mm.mean())
     print(f"TESTING - loss {fin_loss if fin_loss is not None else '--'} - performance {fin_perf:.4f}")
     
     utils.save_obj(file_name="save_values_test", first=save_values_test)
@@ -298,24 +294,20 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
 
     model = model.to(device)
     y_hat = []
-    m = []
     model.eval()
     with torch.no_grad():
         for X, y in tqdm(dataloader):
             X = X.to(device)
             y = y.to(device)
-            out_z, out_y = model(X)
-            for j in range(out_z.shape[0]):
-                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
-                    m.append(((mean - out_z[j]).norm(dim=1)**2))
+            out_z, _ = model(X)
+            outlier_score_val = outlier_score(out_z, mean)
+            for j in range(outlier_score_val.shape[0]):
+                #if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
+                if (outlier_score_val[j] >= threshold):
                     y_hat.append(0)
                 else:
                     y_hat.append(1) # not_classificable
             step += 1
-    mm = torch.stack(m)
-    print (mm.max())
-    print (mm.min())
-    print (mm.mean())
     print(f"TESTING on EXTRA - performance {np.mean(y_hat):.4f}")
 
 def eval_outlier_scores(dataloader:torch.utils.data.DataLoader, model:torch.nn.Module, traindata_means:torch.Tensor, device:torch.device) -> torch.Tensor:
