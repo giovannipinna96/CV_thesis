@@ -202,7 +202,7 @@ def compute_threshold(model, dataloder, num_classes, device):
     outlier_score_val = outlier_score(embedding, mean)
     outlier_score_val2 = outlier_score_val.tolist()
     outlier_score_val2.sort()
-    threshold = percentile(outlier_score_val2, 1)
+    threshold = percentile(outlier_score_val2, 99)
     print(threshold)
     
     return threshold, mean
