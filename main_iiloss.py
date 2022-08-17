@@ -197,7 +197,7 @@ def compute_embeddings(model, dataloader, num_classes, device):
 
     return embedding, label, mean  
 
-def outlier_score(embeddings:torch.Tensor, train_class_means:torch.Tensor):
+def outlier_score_func(embeddings:torch.Tensor, train_class_means:torch.Tensor):
     '''
     Compute the outlier score for the given batch of embeddings and class means obtained from the training set.
     The outlier score for a single datapoint is defined as min_j(||z - m_j||^2), where j is a category and m_j is the mean embedding of this class.
@@ -222,13 +222,13 @@ def outlier_score(embeddings:torch.Tensor, train_class_means:torch.Tensor):
 
 def compute_threshold(model, dataloder, num_classes, device):
     embedding, label, mean = compute_embeddings(model, dataloder, num_classes, device)
-    #outlier_score = []
-    #for j in range(embedding.shape[0]):
-        #outlier_score.append(((mean - embedding[j]).norm(dim=1)**2).min()) 
-    outlier_score_val = outlier_score(embedding, mean)
-    outlier_score_val2 = outlier_score_val.tolist()
-    outlier_score_val2.sort()
-    threshold = percentile(outlier_score_val2, 1)
+    outlier_score = []
+    for j in range(embedding.shape[0]):
+        outlier_score.append(((mean - embedding[j]).norm(dim=1)**2).min()) 
+    #outlier_score_val = outlier_score_func(embedding, mean)
+    #outlier_score_val2 = outlier_score_val.tolist()
+    outlier_score.sort()
+    threshold = percentile(outlier_score, 1)
     
     return threshold, mean
 
