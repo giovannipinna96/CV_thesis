@@ -144,37 +144,37 @@ def train_epoch_iiloss(
         #    this is the forward pass
         out_z, out_y = model(X)
         # 3. calculate the iiloss on the current mini-batch
-        if (i % 2 == 0) :
-            ii_loss = compute_ii_loss(out_z, y, num_classes) 
+        #if (i % 2 == 0) :
+        ii_loss = compute_ii_loss(out_z, y, num_classes) 
         # 4. execute the backward pass given the current loss
-            ii_loss.backward() #retain_graph = True
+        ii_loss.backward(retain_graph = True) #retain_graph = True
         # 5. calculate the iiloss on the current mini-batch
-        if (i % 2 == 1) :
-            ce_loss = loss_fn(out_y, y)
+        #if (i % 2 == 1) :
+        ce_loss = loss_fn(out_y, y)
         # 6. execute the backward pass given the current loss
-            ce_loss.backward()
+        ce_loss.backward()
         # 7. update the value of the params
         optimizer.step()
         if lr_scheduler is not None:
             lr_scheduler.step()
         # 8. calculate the accuracy for this mini-batch
-        if (i % 2 == 0) :
-            ii_acc = performance(out_z, y)
-            ii_loss_meter.update(val=ii_loss.item(), n=X.shape[0])
-            ii_performance_meter.update(val=ii_acc, n=X.shape[0])
-        if (i % 2 == 1):
-            ce_acc = performance(out_y, y)
-            ce_loss_meter.update(val=ce_loss.item(), n=X.shape[0])
-            ce_performance_meter.update(val=ce_acc, n=X.shape[0])
+        #if (i % 2 == 0) :
+        ii_acc = performance(out_z, y)
+        ii_loss_meter.update(val=ii_loss.item(), n=X.shape[0])
+        ii_performance_meter.update(val=ii_acc, n=X.shape[0])
+        #if (i % 2 == 1):
+        ce_acc = performance(out_y, y)
+        ce_loss_meter.update(val=ce_loss.item(), n=X.shape[0])
+        ce_performance_meter.update(val=ce_acc, n=X.shape[0])
 
         #writer.add_embedding(features, metadata=y, lable_img= X.unsqueeze(1))
         # save loss and accurancy
-        if (i % 2 == 0):
-            ii_save_values.append(ii_loss_meter.avg)
-            ii_save_values.append(ii_performance_meter.avg)
-        if (i % 2 == 1):
-            ce_save_values.append(ce_loss_meter.avg)
-            ce_save_values.append(ce_performance_meter.avg)
+        #if (i % 2 == 0):
+        ii_save_values.append(ii_loss_meter.avg)
+        ii_save_values.append(ii_performance_meter.avg)
+        #if (i % 2 == 1):
+        ce_save_values.append(ce_loss_meter.avg)
+        ce_save_values.append(ce_performance_meter.avg)
         step += 1
     
     #return 0,0 #ii_save_values, ce_save_values
@@ -311,7 +311,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", type=int, default=20)
+    parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--root_train", type=str, default="ImageSet/train")
     parser.add_argument("--root_test", type=str, default="ImageSet/test")
     parser.add_argument("--loss_type", type=str, default="iiloss")
