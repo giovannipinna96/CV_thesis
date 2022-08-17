@@ -196,7 +196,7 @@ def compute_embeddings(model, dataloader, num_classes, device):
 
 def compute_threshold(model, dataloder, num_classes, device):
     embedding, label, mean = compute_embeddings(model, dataloder, num_classes, device)
-    outlier_score = []
+    #outlier_score = []
     #for j in range(embedding.shape[0]):
     #    outlier_score.append(((mean - embedding[j]).norm(dim=1)**2).min()) 
     outlier_score_val = outlier_score(embedding, mean)
