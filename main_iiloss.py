@@ -197,12 +197,35 @@ def compute_embeddings(model, dataloader, num_classes, device):
 
     return embedding, label, mean  
 
+def outlier_score(embeddings:torch.Tensor, train_class_means:torch.Tensor):
+    '''
+    Compute the outlier score for the given batch of embeddings and class means obtained from the training set.
+    The outlier score for a single datapoint is defined as min_j(||z - m_j||^2), where j is a category and m_j is the mean embedding of this class.
+    Parameters
+    ----------
+    embeddings: a torch.Tensor of shape (N, D) where N is the number of data points and D is the embedding dimension.
+    train_class_means: a torch.Tensor of shape (K, D) where K is the number of classes.
+    Returns
+    -------
+    a torch.Tensor of shape (N), representing the outlier score for each of the data points.
+    '''
+    assert len(embeddings.shape) == 2, f"Expected 2D tensor of shape N ⨉ D (N=datapoints, D=embedding dimension), got {embeddings.shape}"
+    assert len(train_class_means.shape) == 2, f"Expected 2D tensor of shape K ⨉ D (K=num_classes, D=embedding dimension), got {train_class_means.shape}"
+    # create an expanded version of the embeddings of dimension N ⨉ K ⨉ D, useful for subtracting means
+    embeddings_repeated = embeddings.unsqueeze(1).repeat((1, train_class_means.shape[0], 1))
+    # compute the difference between the embeddings and the class means
+    difference_from_mean = embeddings_repeated - train_class_means
+    # compute the squared norm of the difference (N ⨉ K matrix)
+    norm_from_mean = difference_from_mean.norm(dim=2)**2
+    # get the min for each datapoint
+    return norm_from_mean.min(dim=1).values
 
 def compute_threshold(model, dataloder, num_classes, device):
     embedding, label, mean = compute_embeddings(model, dataloder, num_classes, device)
-    outlier_score = []
-    for j in range(embedding.shape[0]):
-        outlier_score.append(((mean - embedding[j]).norm(dim=1)**2).min()) 
+    #outlier_score = []
+    #for j in range(embedding.shape[0]):
+        #outlier_score.append(((mean - embedding[j]).norm(dim=1)**2).min()) 
+    outlier_score = outlier_score(embedding, mean)
     outlier_score.sort()
     threshold = percentile(outlier_score, 1)
     
@@ -263,7 +286,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             out_z, out_y = model(X)
             y_hat = []
             for j in range(out_z.shape[0]):
-                if (((mean - out_z[j]).norm(dim=1)**2).min() >= 1765):
+                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
                     m.append(((mean - out_z[j]).norm(dim=1)**2))
                     y_hat.append(argmax(out_y[j].cpu()))
                 else:
@@ -307,7 +330,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
             y = y.to(device)
             out_z, out_y = model(X)
             for j in range(out_z.shape[0]):
-                if (((mean - out_z[j]).norm(dim=1)**2).min() >= 1765):
+                if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
                     m.append(((mean - out_z[j]).norm(dim=1)**2))
                     y_hat.append(0)
                 else:
