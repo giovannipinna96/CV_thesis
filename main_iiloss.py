@@ -194,29 +194,6 @@ def compute_embeddings(model, dataloader, num_classes, device):
 
     return embedding, label, mean  
 
-def outlier_score_func(embeddings:torch.Tensor, train_class_means:torch.Tensor):
-    '''
-    Compute the outlier score for the given batch of embeddings and class means obtained from the training set.
-    The outlier score for a single datapoint is defined as min_j(||z - m_j||^2), where j is a category and m_j is the mean embedding of this class.
-    Parameters
-    ----------
-    embeddings: a torch.Tensor of shape (N, D) where N is the number of data points and D is the embedding dimension.
-    train_class_means: a torch.Tensor of shape (K, D) where K is the number of classes.
-    Returns
-    -------
-    a torch.Tensor of shape (N), representing the outlier score for each of the data points.
-    '''
-    assert len(embeddings.shape) == 2, f"Expected 2D tensor of shape N ⨉ D (N=datapoints, D=embedding dimension), got {embeddings.shape}"
-    assert len(train_class_means.shape) == 2, f"Expected 2D tensor of shape K ⨉ D (K=num_classes, D=embedding dimension), got {train_class_means.shape}"
-    # create an expanded version of the embeddings of dimension N ⨉ K ⨉ D, useful for subtracting means
-    embeddings_repeated = embeddings.unsqueeze(1).repeat((1, train_class_means.shape[0], 1))
-    # compute the difference between the embeddings and the class means
-    difference_from_mean = embeddings_repeated - train_class_means
-    # compute the squared norm of the difference (N ⨉ K matrix)
-    norm_from_mean = difference_from_mean.norm(dim=2)**2
-    # get the min for each datapoint
-    return norm_from_mean.min(dim=1).values
-
 def compute_threshold(model, dataloder, num_classes, device):
     embedding, label, mean = compute_embeddings(model, dataloder, num_classes, device)
     outlier_score = []
@@ -232,7 +209,7 @@ def compute_threshold(model, dataloder, num_classes, device):
 def compute_ii_loss(out_z, labels, num_classes):
     n_datapoints = len(out_z)
     device = out_z.device
-    delta = 0.001 #float("inf")
+    delta = float("inf")
     intra_spread = torch.Tensor([0]).to(device)
     inter_separation = torch.Tensor([float("inf")]).to(device)
     class_mean = bucket_mean(out_z, labels, num_classes)
@@ -404,6 +381,8 @@ if __name__ == "__main__":
     net = createNet.resNet50Costum(num_classes)
     dict_custom_resnet50, classic = createNet.create_dict_resNet50Costum(net, "resnet50_aug_per_giovanni.pt_resnet50.pt")
     net.load_state_dict(dict_custom_resnet50)
+    for param in net.parameters():
+        param.requires_grad = True
     if allParams.optimizer.lower() == "sgd":
         optimizer = torch.optim.SGD(net.parameters(),
                                     lr=allParams.lr,
