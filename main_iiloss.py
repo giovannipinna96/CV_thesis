@@ -283,7 +283,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
     fin_loss = loss_meter.sum if loss_fn is not None else None
     fin_perf = performance_meter.avg
     acc2 = y_hat.count(-1)/len(y_hat)
-    print(f"TESTING - loss {fin_loss if fin_loss is not None else '--'} - performance {fin_perf:.4f} - performace unknown {acc2}")
+    print(f"TESTING - loss {fin_loss if fin_loss is not None else '--'} - performance {fin_perf:.4f} - performace unknown {1 - acc2}")
     
     utils.save_obj(file_name="save_values_test", first=save_values_test)
     return fin_loss, fin_perf
@@ -304,7 +304,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
             outlier_score_val = outlier_score(out_z, mean)
             for j in range(outlier_score_val.shape[0]):
                 #if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
-                if (outlier_score_val[j] >= 5):
+                if (outlier_score_val[j] >= threshold):
                     y_hat.append(0)
                 else:
                     y_hat.append(1) # not_classificable
