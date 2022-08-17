@@ -1,5 +1,4 @@
 import argparse
-from re import M
 import torch
 import transformation
 import os
@@ -284,10 +283,10 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
     # get final performances
     fin_loss = loss_meter.sum if loss_fn is not None else None
     fin_perf = performance_meter.avg
-    
-    print (max(m))
-    print (min(m))
-    print (mean(m))
+    mm = torch.stack(m)
+    print (mm.max())
+    print (mm.min())
+    print (mm.mean())
     print(f"TESTING - loss {fin_loss if fin_loss is not None else '--'} - performance {fin_perf:.4f}")
     
     utils.save_obj(file_name="save_values_test", first=save_values_test)
@@ -314,9 +313,10 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
                 else:
                     y_hat.append(1) # not_classificable
             step += 1
-    print (max(m))
-    print (min(m))
-    print (mean(m))
+    mm = torch.stack(m)
+    print (mm.max())
+    print (mm.min())
+    print (mm.mean())
     print(f"TESTING on EXTRA - performance {np.mean(y_hat):.4f}")
 
 
