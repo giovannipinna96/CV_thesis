@@ -197,10 +197,10 @@ def compute_embeddings(model, dataloader, num_classes, device):
 def compute_threshold(model, dataloder, num_classes, device):
     embedding, label, mean = compute_embeddings(model, dataloder, num_classes, device)
     outlier_score = []
-    for j in range(embedding.shape[0]):
-        outlier_score.append(((mean - embedding[j]).norm(dim=1)**2).min()) 
-    #outlier_score_val = outlier_score_func(embedding, mean)
-    #outlier_score_val2 = outlier_score_val.tolist()
+    #for j in range(embedding.shape[0]):
+    #    outlier_score.append(((mean - embedding[j]).norm(dim=1)**2).min()) 
+    outlier_score_val = outlier_score(embedding, mean)
+    outlier_score_val2 = outlier_score_val.tolist()
     outlier_score.sort()
     threshold = percentile(outlier_score, 1)
     
@@ -463,19 +463,19 @@ if __name__ == "__main__":
                         mean = mean
                         )
     print('Strat not punches')
-#    test_model_on_extra(net,
-#                        extraloader,
-#                        device=allParams.get_device(),
-#                        threshold=threshold,
-#                        mean = mean
-#                        )
+    test_model_on_extra(net,
+                        extraloader,
+                        device=allParams.get_device(),
+                        threshold=threshold,
+                        mean = mean
+                        )
 
-    outlier_scores_test = eval_outlier_scores(testloader, net, mean, device=allParams.get_device())
-    print(outlier_scores_test)
+#    outlier_scores_test = eval_outlier_scores(testloader, net, mean, device=allParams.get_device())
+#    print(outlier_scores_test)
 
-    print("Getting outlier scores for ood set")
-    outlier_scores_extra = eval_outlier_scores(extraloader, net, mean, device=allParams.get_device())
-    print(outlier_scores_extra)
+#    print("Getting outlier scores for ood set")
+#    outlier_scores_extra = eval_outlier_scores(extraloader, net, mean, device=allParams.get_device())
+#    print(outlier_scores_extra)
 
     print('Saving weights...')
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
