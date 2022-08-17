@@ -264,7 +264,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             y_hat = []
             for j in range(out_z.shape[0]):
                 if (((mean - out_z[j]).norm(dim=1)**2).min() >= 1765):
-                    m.append(((mean - out_z[j]).norm(dim=1)**2).min())
+                    m.append(((mean - out_z[j]).norm(dim=1)**2))
                     y_hat.append(argmax(out_y[j].cpu()))
                 else:
                     y_hat.append(torch.tensor(-1)) # not_classificable
@@ -308,7 +308,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
             out_z, out_y = model(X)
             for j in range(out_z.shape[0]):
                 if (((mean - out_z[j]).norm(dim=1)**2).min() >= 1765):
-                    m.append(((mean - out_z[j]).norm(dim=1)**2).min())
+                    m.append(((mean - out_z[j]).norm(dim=1)**2))
                     y_hat.append(0)
                 else:
                     y_hat.append(1) # not_classificable
