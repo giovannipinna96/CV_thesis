@@ -210,7 +210,7 @@ def compute_threshold(model, dataloder, num_classes, device):
 def compute_ii_loss(out_z, labels, num_classes):
     n_datapoints = len(out_z)
     device = out_z.device
-    delta = 0.01
+    delta = 0.1
     intra_spread = torch.Tensor([0]).to(device)
     inter_separation = torch.Tensor([float("inf")]).to(device)
     class_mean = bucket_mean(out_z, labels, num_classes)
@@ -268,6 +268,8 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
                 else:
                     y_hat.append(torch.tensor(-1)) # not_classificable
             
+            print(y_hat.count(torch.tensor(-1)))
+            print(y_hat.count(-1))
             loss = loss_fn(out_y, y) if loss_fn is not None else None
             acc = performance(out_y, y)
             if loss_fn is not None:
