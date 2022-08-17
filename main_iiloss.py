@@ -202,7 +202,7 @@ def compute_threshold(model, dataloder, num_classes, device):
     outlier_score_val = outlier_score(embedding, mean)
     outlier_score_val2 = outlier_score_val.tolist()
     outlier_score_val2.sort()
-    threshold = percentile(outlier_score_val2, 99)
+    threshold = percentile(outlier_score_val2, 1)
     print(threshold)
     
     return threshold, mean
@@ -267,9 +267,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
                     y_hat.append(argmax(out_y[j].cpu()))
                 else:
                     y_hat.append(torch.tensor(-1)) # not_classificable
-            
-            print(y_hat.count(torch.tensor(-1)))
-            print(y_hat.count(-1))
+    
             loss = loss_fn(out_y, y) if loss_fn is not None else None
             acc = performance(out_y, y)
             if loss_fn is not None:
@@ -284,7 +282,8 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
     # get final performances
     fin_loss = loss_meter.sum if loss_fn is not None else None
     fin_perf = performance_meter.avg
-    print(f"TESTING - loss {fin_loss if fin_loss is not None else '--'} - performance {fin_perf:.4f}")
+    acc2 = y_hat.count(-1)/len(y_hat)
+    print(f"TESTING - loss {fin_loss if fin_loss is not None else '--'} - performance {fin_perf:.4f} - performace unknown {acc2}")
     
     utils.save_obj(file_name="save_values_test", first=save_values_test)
     return fin_loss, fin_perf
@@ -305,7 +304,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
             outlier_score_val = outlier_score(out_z, mean)
             for j in range(outlier_score_val.shape[0]):
                 #if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
-                if (outlier_score_val[j] >= threshold):
+                if (outlier_score_val[j] >= 5):
                     y_hat.append(0)
                 else:
                     y_hat.append(1) # not_classificable
