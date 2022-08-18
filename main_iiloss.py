@@ -15,6 +15,7 @@ import utils
 from tqdm import tqdm
 from numpy import argmax
 import numpy as np
+from matplotlib import pyplot as plt
 
 
 
@@ -350,6 +351,21 @@ def outlier_score(embeddings:torch.Tensor, train_class_means:torch.Tensor):
     # get the min for each datapoint
     return norm_from_mean.min(dim=1).values
 
+def eval_outlier_scores(dataloader:torch.utils.data.DataLoader, model:torch.nn.Module, traindata_means:torch.Tensor, device:torch.device) -> torch.Tensor:
+    '''
+    Evaluates the outlier scores for a model on a dataloader.
+    '''
+    model.to(device)
+    model.eval()
+    with torch.no_grad():
+        outlier_scores = torch.zeros(len(dataloader.dataset))
+        for i, (X, y) in enumerate(tqdm(dataloader)):
+            X = X.to(device)
+            y = y.to(device)
+            embeddings, y_hat = model(X)
+            outlier_scores_batch = outlier_score(embeddings, traindata_means)
+            outlier_scores[i*X.shape[0]:(i+1)*X.shape[0]] = outlier_scores_batch
+    return outlier_scores
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -466,12 +482,18 @@ if __name__ == "__main__":
                         mean = mean
                         )
 
-#    outlier_scores_test = eval_outlier_scores(testloader, net, mean, device=allParams.get_device())
-#    print(outlier_scores_test)
+    print("Getting outlier scores for testset")
+    outlier_scores_test = eval_outlier_scores(testloader, net, mean, device=args.device)
+    #torch.save(outlier_scores_test, f"{args.model_path}_outliers_score_test.pth")
 
-#    print("Getting outlier scores for ood set")
-#    outlier_scores_extra = eval_outlier_scores(extraloader, net, mean, device=allParams.get_device())
-#    print(outlier_scores_extra)
+    print("Getting outlier scores for ood set")
+    outlier_scores_extra = eval_outlier_scores(extraloader, net, mean, device=args.device)
+    #torch.save(outlier_scores_extra, f"{args.model_path}_outliers_score_ood.pth")
+
+    plt.hist(outlier_scores_test.detach().cpu().numpy(), bins=100, alpha=.5, density=True, label="test")
+    plt.hist(outlier_scores_extra.detach().cpu().numpy(), bins=100, alpha=.5, density=True, label="extra")
+    plt.legend(loc="upper right")
+    plt.savefig(f"{args.model_path}_outlier_scores.png")
 
     print('Saving weights...')
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
