@@ -202,7 +202,7 @@ def compute_threshold(model, dataloder, num_classes, device):
     outlier_score_val = outlier_score(embedding, mean)
     outlier_score_val2 = outlier_score_val.tolist()
     outlier_score_val2.sort()
-    threshold = percentile(outlier_score_val2, 99)
+    threshold = percentile(outlier_score_val2, 1)
     print(percentile(outlier_score_val2, 1))
     print(percentile(outlier_score_val2, 99))
     print(threshold)
@@ -212,7 +212,7 @@ def compute_threshold(model, dataloder, num_classes, device):
 def compute_ii_loss(out_z, labels, num_classes):
     n_datapoints = len(out_z)
     device = out_z.device
-    delta = 0.1
+    delta = 0.5
     intra_spread = torch.Tensor([0]).to(device)
     inter_separation = torch.Tensor([float("inf")]).to(device)
     class_mean = bucket_mean(out_z, labels, num_classes)
@@ -265,7 +265,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             outlier_score_val = outlier_score(out_z, mean)
             for j in range(outlier_score_val.shape[0]):
                 #if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
-                if (outlier_score_val[j] >= threshold):
+                if (outlier_score_val[j] >= 5):
                     y_hat.append(argmax(out_y[j].cpu()))
                 else:
                     y_hat.append(torch.tensor(-1)) # not_classificable
@@ -306,7 +306,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
             outlier_score_val = outlier_score(out_z, mean)
             for j in range(outlier_score_val.shape[0]):
                 #if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
-                if (outlier_score_val[j] >= threshold):
+                if (outlier_score_val[j] >= 5):
                     y_hat.append(0)
                 else:
                     y_hat.append(1) # not_classificable
