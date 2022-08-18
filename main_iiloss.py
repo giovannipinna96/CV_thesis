@@ -456,7 +456,7 @@ if __name__ == "__main__":
                         loss_fn=loss_fn,
                         device=allParams.get_device(),
                         threshold=threshold,
-                        threshold = threshold2,
+                        threshold2 = threshold2,
                         mean = mean
                         )
     print('Strat not punches')
@@ -464,7 +464,7 @@ if __name__ == "__main__":
                         extraloader,
                         device=allParams.get_device(),
                         threshold=threshold,
-                        threshold = threshold2,
+                        threshold2 = threshold2,
                         mean = mean
                         )
 
