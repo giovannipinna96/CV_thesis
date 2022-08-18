@@ -201,13 +201,11 @@ def compute_threshold(model, dataloder, num_classes, device):
     #    outlier_score.append(((mean - embedding[j]).norm(dim=1)**2).min()) 
     outlier_score_val = outlier_score(embedding, mean)
     outlier_score_val2 = outlier_score_val.tolist()
-    outlier_score_val2.sort(reverse=False)
+    outlier_score_val2.sort()
     threshold = percentile(outlier_score_val2, 1)
-    print(percentile(outlier_score_val2, 1))
-    print(percentile(outlier_score_val2, 99))
-    print(threshold)
+    threshold2 = percentile(outlier_score_val2, 99)
     
-    return threshold, mean
+    return threshold, threshold2, mean
 
 def compute_ii_loss(out_z, labels, num_classes):
     n_datapoints = len(out_z)
@@ -243,7 +241,7 @@ def bucket_mean(embeddings, labels, num_classes):
     return tot/count
 
 def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=None, device=None,
-                        threshold = None, mean = None):
+                        threshold = None, threshold2 = None, mean = None):
     step = 0
     # create an AverageMeter for the loss if passed
     if loss_fn is not None:
@@ -265,7 +263,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             outlier_score_val = outlier_score(out_z, mean)
             for j in range(outlier_score_val.shape[0]):
                 #if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
-                if (outlier_score_val[j] >= threshold):
+                if (outlier_score_val[j] >= threshold) and (outlier_score_val[j] <= threshold2) :
                     y_hat.append(argmax(out_y[j].cpu()))
                 else:
                     y_hat.append(torch.tensor(-1)) # not_classificable
@@ -291,7 +289,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
     utils.save_obj(file_name="save_values_test", first=save_values_test)
     return fin_loss, fin_perf
 
-def test_model_on_extra(model, dataloader, device=None, threshold = None, mean = None):
+def test_model_on_extra(model, dataloader, device=None, threshold = None, threshold2 = None, mean = None):
     step = 0
     if device is None:
         device = utils.use_gpu_if_possible()
@@ -307,7 +305,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, mean =
             outlier_score_val = outlier_score(out_z, mean)
             for j in range(outlier_score_val.shape[0]):
                 #if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
-                if (outlier_score_val[j] >= threshold):
+                if (outlier_score_val[j] >= threshold) and (outlier_score_val[j] <= threshold2):
                     y_hat.append(0)
                 else:
                     y_hat.append(1) # not_classificable
@@ -450,7 +448,7 @@ if __name__ == "__main__":
                       num_classes=num_classes
                       )
     print('Compute threshold')
-    threshold, mean = compute_threshold(net, trainloader, num_classes, allParams.get_device())
+    threshold, threshold2, mean = compute_threshold(net, trainloader, num_classes, allParams.get_device())
 
     print('Start Test ii loss')
     test_model_iiloss(net,
@@ -458,6 +456,7 @@ if __name__ == "__main__":
                         loss_fn=loss_fn,
                         device=allParams.get_device(),
                         threshold=threshold,
+                        threshold = threshold2,
                         mean = mean
                         )
     print('Strat not punches')
@@ -465,6 +464,7 @@ if __name__ == "__main__":
                         extraloader,
                         device=allParams.get_device(),
                         threshold=threshold,
+                        threshold = threshold2,
                         mean = mean
                         )
 
