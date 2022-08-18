@@ -483,17 +483,17 @@ if __name__ == "__main__":
                         )
 
     print("Getting outlier scores for testset")
-    outlier_scores_test = eval_outlier_scores(testloader, net, mean, device=allParams.get_device())
+    #outlier_scores_test = eval_outlier_scores(testloader, net, mean, device=allParams.get_device())
     #torch.save(outlier_scores_test, f"{args.model_path}_outliers_score_test.pth")
 
     print("Getting outlier scores for ood set")
-    outlier_scores_extra = eval_outlier_scores(extraloader, net, mean, device=allParams.get_device())
+    #outlier_scores_extra = eval_outlier_scores(extraloader, net, mean, device=allParams.get_device())
     #torch.save(outlier_scores_extra, f"{args.model_path}_outliers_score_ood.pth")
 
-    plt.hist(outlier_scores_test.detach().cpu().numpy(), bins=100, alpha=.5, density=True, label="test")
-    plt.hist(outlier_scores_extra.detach().cpu().numpy(), bins=100, alpha=.5, density=True, label="extra")
-    plt.legend(loc="upper right")
-    plt.savefig(f"{args.model_path}_outlier_scores.png")
+    #plt.hist(outlier_scores_test.detach().cpu().numpy(), bins=100, alpha=.5, density=True, label="test")
+    #plt.hist(outlier_scores_extra.detach().cpu().numpy(), bins=100, alpha=.5, density=True, label="extra")
+    #plt.legend(loc="upper right")
+    #plt.savefig(f"{args.model_path}_outlier_scores.png")
 
     print('Saving weights...')
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
