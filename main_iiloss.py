@@ -468,12 +468,12 @@ if __name__ == "__main__":
                         )
 
     print("Getting outlier scores for testset")
-    outlier_scores_test = eval_outlier_scores(testloader, net, mean, device=args.device)
+    outlier_scores_test = eval_outlier_scores(testloader, net, mean, device=allParams.get_device())
     #torch.save(outlier_scores_test, f"{args.model_path}_outliers_score_test.pth")
 
     print("Getting outlier scores for ood set")
-    outlier_scores_extra = eval_outlier_scores(extraloader, net, mean, device=args.device)
-    torch.save(outlier_scores_extra, f"{args.model_path}_outliers_score_ood.pth")
+    outlier_scores_extra = eval_outlier_scores(extraloader, net, mean, device=allParams.get_device())
+    #torch.save(outlier_scores_extra, f"outliers_score_ood.pth")
 
     plt.hist(outlier_scores_test.detach().cpu().numpy(), bins=100, alpha=.5, density=True, label="test")
     plt.hist(outlier_scores_extra.detach().cpu().numpy(), bins=100, alpha=.5, density=True, label="extra")
