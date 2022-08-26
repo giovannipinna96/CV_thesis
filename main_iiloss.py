@@ -264,7 +264,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             outlier_score_val = outlier_score(out_z, mean)
             for j in range(outlier_score_val.shape[0]):
                 #if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
-                if (outlier_score_val[j] >= threshold) and (outlier_score_val[j] <= threshold2) :
+                if (outlier_score_val[j] <= threshold2) :
                     y_hat.append(argmax(out_y[j].cpu()))
                 else:
                     y_hat.append(torch.tensor(-1)) # not_classificable
@@ -305,7 +305,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, thresh
             outlier_score_val = outlier_score(out_z, mean)
             for j in range(outlier_score_val.shape[0]):
                 #if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
-                if (outlier_score_val[j] >= threshold) and (outlier_score_val[j] <= threshold2):
+                if (outlier_score_val[j] <= threshold2):
                     y_hat.append(0)
                 else:
                     y_hat.append(1) # not_classificable
