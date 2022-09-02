@@ -262,6 +262,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             out_z, out_y = model(X)
             y_hat = []
             outlier_score_val = outlier_score(out_z, mean)
+            print(outlier_score_val)
             for j in range(outlier_score_val.shape[0]):
                 #if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
                 if (outlier_score_val[j] <= threshold2) :
@@ -303,6 +304,7 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, thresh
             y = y.to(device)
             out_z, _ = model(X)
             outlier_score_val = outlier_score(out_z, mean)
+            print(outlier_score_val)
             for j in range(outlier_score_val.shape[0]):
                 #if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
                 if (outlier_score_val[j] <= threshold2):
@@ -361,7 +363,7 @@ if __name__ == "__main__":
     parser.add_argument("--optimizer", type=str, default="radam")
     parser.add_argument("--out_net", type=int, default=18)
     parser.add_argument("--is_feature_extraction", type=bool, default=True)
-    parser.add_argument("--weights_save_path", type=str, default="models/model_BEST8.pt")
+    parser.add_argument("--weights_save_path", type=str, default="models/model_BEST9.pt")
     parser.add_argument("--pickle_save_path", type=str, default="out_ii")
     parser.add_argument("--is_ml", type=bool, default=True)
     parser.add_argument("--temperature", type=float, default=0.1)
@@ -478,7 +480,7 @@ if __name__ == "__main__":
     plt.hist(outlier_scores_test.detach().cpu().numpy(), bins=100, alpha=.5, density=True, label="test")
     plt.hist(outlier_scores_extra.detach().cpu().numpy(), bins=100, alpha=.5, density=True, label="extra")
     plt.legend(loc="upper right")
-    plt.savefig(f"./outlier_scores_fig.png")
+    plt.savefig(f"./outlier_scores_fig9.png")
 
     print('Saving weights...')
     os.makedirs(os.path.dirname(allParams.get_weights_save_path()),
@@ -487,7 +489,9 @@ if __name__ == "__main__":
     torch.save(net.state_dict(), allParams.get_weights_save_path())
     
     print('Saving pickle')
-    utils.save_obj(file_name=f"./pickle_thres_mean_BEST8",
+    print(threshold)
+    print(threshold2)
+    utils.save_obj(file_name=f"./pickle_thres_mean_BEST9",
                         first=threshold,
                         second=mean,
                         third = threshold2 
