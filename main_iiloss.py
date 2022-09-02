@@ -285,7 +285,7 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
     fin_perf = performance_meter.avg
     acc2 = y_hat.count(-1)/len(y_hat)
     print(f"TESTING - loss {fin_loss if fin_loss is not None else '--'} - performance {fin_perf:.4f} - performace unknown {1 - acc2}")
-    
+    print(y_hat)
     utils.save_obj(file_name="save_values_test", first=save_values_test)
     return fin_loss, fin_perf
 
