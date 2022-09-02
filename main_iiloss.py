@@ -262,7 +262,6 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
             out_z, out_y = model(X)
             y_hat = []
             outlier_score_val = outlier_score(out_z, mean)
-            print(outlier_score_val)
             for j in range(outlier_score_val.shape[0]):
                 #if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
                 if (outlier_score_val[j] <= threshold2) :
@@ -286,7 +285,6 @@ def test_model_iiloss(model, dataloader, performance=train.accuracy, loss_fn=Non
     fin_perf = performance_meter.avg
     acc2 = y_hat.count(-1)/len(y_hat)
     print(f"TESTING - loss {fin_loss if fin_loss is not None else '--'} - performance {fin_perf:.4f} - performace unknown {1 - acc2}")
-    print(y_hat)
     utils.save_obj(file_name="save_values_test", first=save_values_test)
     return fin_loss, fin_perf
 
@@ -304,7 +302,6 @@ def test_model_on_extra(model, dataloader, device=None, threshold = None, thresh
             y = y.to(device)
             out_z, _ = model(X)
             outlier_score_val = outlier_score(out_z, mean)
-            print(outlier_score_val)
             for j in range(outlier_score_val.shape[0]):
                 #if (((mean - out_z[j]).norm(dim=1)**2).min() >= threshold):
                 if (outlier_score_val[j] <= threshold2):
@@ -489,8 +486,6 @@ if __name__ == "__main__":
     torch.save(net.state_dict(), allParams.get_weights_save_path())
     
     print('Saving pickle')
-    print(threshold)
-    print(threshold2)
     utils.save_obj(file_name=f"./pickle_thres_mean_BEST9",
                         first=threshold,
                         second=mean,
